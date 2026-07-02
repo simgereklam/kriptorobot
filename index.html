@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KRİPTO AI ROBOT V6 - KARARLI SENKRONİZE SİSTEM</title>
+  <title>KRİPTO AI ROBOT V7 - ANLIK KÂR ALMA SİSTEMİ</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
   <style>
@@ -65,13 +65,13 @@
     .panel-header h3 { font-size: 13px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
     .scroll-content { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .analysis-block { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
-    .block-header { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; justify-content: space-between; }
     .status-badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .status-badge-title { font-size: 13px; font-weight: 800; color: var(--muted); }
     .status-badge-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 4px; text-transform: uppercase; }
     .status-badge-indicator.up { background: rgba(14,203,129,0.15); color: var(--green); border: 1px solid var(--green); }
     .status-badge-indicator.down { background: rgba(246,70,93,0.15); color: var(--red); border: 1px solid var(--red); }
     .status-badge-indicator.neut { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+    .status-badge-indicator.take { background: rgba(240,185,11,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
     .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; align-items: center; }
     .metric-row:last-child { border-bottom: none; }
     .metric-row span { color: var(--muted); font-weight: 500; }
@@ -102,7 +102,7 @@
   <!-- 1. SOL PANEL -->
   <aside class="card left-sidebar">
     <div class="brand-area">
-      <div class="brand-title">KRİPTO AI ROBOT V6</div>
+      <div class="brand-title">KRİPTO AI ROBOT V7</div>
       <span class="badge-live">CANLI (FLOW)</span>
     </div>
     <div class="search-box">
@@ -271,30 +271,21 @@
     }).observe($('chart'));
   }
 
-  // GERÇEKÇİ TREND MOTORU (FRAKTAL / TEK ETİKET MANTIĞI)
+  // ANLIK KÂR ALMA VE TREND TAKİP MOTORU
   function analyzeCandles(candles) {
     if (candles.length < 10) return null;
     
-    // Williams Fractal benzeri tepe-dip taraması (Sadece son oluşumu bulmak için sondan geriye tarar)
     let lastBuyIdx = -1;
-    let lastSellIdx = -1;
+    let highestPriceAfterBuy = 0;
+    let highestIdx = -1;
 
+    // 1. Önce en son geçerli Alım (Dip/Fractal Low) noktasını bulalım
     for (let i = candles.length - 3; i >= 2; i--) {
       const c = candles[i];
-      const prev = candles[i-1];
-      const prev2 = candles[i-2];
-      const nxt = candles[i+1];
-      const nxt2 = candles[i+2];
-
-      // Dip Koşulu (Fractal Low) + Hacim desteği
-      if (c.low <= prev.low && c.low <= prev2.low && c.low <= nxt.low && c.low <= nxt2.low) {
-        if (lastBuyIdx === -1) lastBuyIdx = i;
+      if (c.low <= candles[i-1].low && c.low <= candles[i-2].low && c.low <= candles[i+1].low && c.low <= candles[i+2].low) {
+        lastBuyIdx = i;
+        break;
       }
-      // Tepe Koşulu (Fractal High) + Hacim Desteği
-      if (c.high >= prev.high && c.high >= prev2.high && c.high >= nxt.high && c.high >= nxt2.high) {
-        if (lastSellIdx === -1) lastSellIdx = i;
-      }
-      if (lastBuyIdx !== -1 && lastSellIdx !== -1) break;
     }
 
     const lastCandle = candles[candles.length - 1];
@@ -303,39 +294,49 @@
 
     let signalType = 'IZLEME';
     let score = 50;
-    let markerTargetIdx = -1;
+    let triggerPrice = currentPrice;
+    let markerTime = lastCandle.time;
 
-    // Hangisi daha yakın zamanda (güncel) oluştu?
-    if (lastBuyIdx > lastSellIdx && lastBuyIdx !== -1) {
+    if (lastBuyIdx !== -1) {
+      triggerPrice = candles[lastBuyIdx].close;
       signalType = 'ALIM';
-      score = 88;
-      markerTargetIdx = lastBuyIdx;
-    } else if (lastSellIdx > lastBuyIdx && lastSellIdx !== -1) {
-      signalType = 'KAÇ';
-      score = 12;
-      markerTargetIdx = lastSellIdx;
+      score = 85;
+      markerTime = candles[lastBuyIdx].time;
+
+      // Alımdan sonra görülen en yüksek tepeyi bulalım (Kâr erimesini ölçmek için)
+      for (let j = lastBuyIdx; j < candles.length; j++) {
+        if (candles[j].high > highestPriceAfterBuy) {
+          highestPriceAfterBuy = candles[j].high;
+          highestIdx = j;
+        }
+      }
+
+      // KRİTİK ÇIKIŞ KONTROLÜ: Eğer fiyat gördüğü en yüksek tepeden %0.5'ten fazla geri çekildiyse KÂR AL/ÇIK tetikle!
+      const pullBackPercent = ((highestPriceAfterBuy - currentPrice) / highestPriceAfterBuy) * 100;
+      if (pullBackPercent >= 0.5 && highestIdx > lastBuyIdx) {
+        signalType = 'TAKE_PROFIT';
+        score = 40; // Nötr/Çıkış alanı
+        triggerPrice = highestPriceAfterBuy; // Çıkışın tetiklendiği tepe referansı
+        markerTime = candles[highestIdx].time; // Tam tepe mumuna etiket basmak için
+      }
     }
 
-    // Hesaplamalar
-    const baseTriggerPrice = candles[markerTargetIdx !== -1 ? markerTargetIdx : candles.length - 2].close;
-    const stopPrice = baseTriggerPrice * 0.985;
-    const target1 = baseTriggerPrice * 1.03;
-    const target2 = baseTriggerPrice * 1.06;
+    // Statik hedefler
+    const stopPrice = triggerPrice * 0.985;
+    const target1 = triggerPrice * 1.025;
+    const target2 = triggerPrice * 1.05;
 
-    // Dinamik ve Tutarlı Metin Yapısı
     let text = '';
     if (signalType === 'ALIM') {
-      text = `🟢 STRATEJİ: Yükseliş trendi onaylandı. Robot giriş seviyesi olan $${formatPrice(baseTriggerPrice, precision)} üzerinden pozisyon korunuyor. Hedeflerimiz sırasıyla $${formatPrice(target1, precision)} ve $${formatPrice(target2, precision)} seviyeleridir. Risk baremi $${formatPrice(stopPrice, precision)} olarak belirlenmiştir.`;
-    } else if (signalType === 'KAÇ') {
-      text = `🚨 STRATEJİ: Güçlü satış dalgası algılandı. Tepe çıkış seviyesi olan $${formatPrice(baseTriggerPrice, precision)} kırıldığından ötürü tüm alım hedefleri iptal edilmiştir. Anlık borsa fiyatı tehlike bölgesindedir. Zarar kes limitine ($${formatPrice(stopPrice, precision)}) dikkat edilmelidir.`;
+      text = `🟢 STRATEJİ: Yükseliş trendi aktif. $${formatPrice(triggerPrice, precision)} seviyesindeki alım korunuyor. Tepe takibi yapılıyor, geri çekilme olursa sistem otomatik kâr alacaktır.`;
+    } else if (signalType === 'TAKE_PROFIT') {
+      text = `💰 STRATEJİ: KÂR ALILDI VE POZİSYONDAN ÇIKILDI! Fiyat en yüksek tepe olan $${formatPrice(highestPriceAfterBuy, precision)} seviyesinden aşağı yönlü sarktığı için robot kârın erimesini engelledi ve nakde geçti.`;
     } else {
-      text = `⏳ STRATEJİ: Piyasa yatay bantta konsolide oluyor. Net bir dip veya tepe oluşumu onaylanmadı. Güvenli bölge kırılımı bekleniyor.`;
+      text = `⏳ STRATEJİ: Piyasa yatay. Net bir hareket veya kırılım bekleniyor.`;
     }
 
     return { 
-      score, signalType, text, currentPrice, target1, target2, stopPrice, precision,
-      triggerPrice: baseTriggerPrice,
-      markerTime: markerTargetIdx !== -1 ? candles[markerTargetIdx].time : null
+      score, signalType, text, currentPrice, target1, target2, stopPrice, precision, triggerPrice, markerTime, highestPriceAfterBuy
     };
   }
 
@@ -344,68 +345,59 @@
     const p = a.precision;
 
     $('sidePrice').textContent = `$${formatPrice(a.currentPrice, p)}`;
-    $('mainAiConfidence').textContent = `%${(a.score * 1.1).toFixed(1)}`; // Alt bar yapay zeka güveni artık üst skorla senkronize
+    $('mainAiConfidence').textContent = `%${(a.score * 1.1).toFixed(1)}`;
     
     const sb = $('statusBadge'); const st = $('statusText'); const cb = $('commentBlock');
     
-    // BÜTÜN PANEL ARTIK BİRBİRİYLE TUTARLI VE ENTEGRE
     if (a.signalType === 'ALIM') {
       sb.className = 'status-badge-indicator up'; st.textContent = 'GÜÇLÜ ALIM 🟢'; cb.style.borderLeftColor = 'var(--green)';
-      
       $('sideBuyPoint').textContent = `$${formatPrice(a.triggerPrice, p)}`; $('sideBuyPoint').className = "up-text";
-      $('sideTarget1').textContent = `$${formatPrice(a.target1, p)}`; $('sideTarget1').className = "up-text";
-      $('sideTarget2').textContent = `$${formatPrice(a.target2, p)}`; $('sideTarget2').className = "up-text";
+      $('sideTarget1').textContent = `$${formatPrice(a.target1, p)}`;
+      $('sideTarget2').textContent = `$${formatPrice(a.target2, p)}`;
       $('sideStop').textContent = `$${formatPrice(a.stopPrice, p)}`; $('sideStop').className = "down-text";
 
-      // Sadece 1 tane Alım Etiketi Bas
       state.candleSeries.setMarkers([{
         time: a.markerTime, position: 'belowBar', color: '#0ecb81', shape: 'arrowUp', text: `AL: $${formatPrice(a.triggerPrice, p)}`, size: 2
       }]);
       drawLines(a.stopPrice, a.target1, a.target2);
 
-    } else if (a.signalType === 'KAÇ') {
-      sb.className = 'status-badge-indicator down'; st.textContent = 'SATIŞ BAŞLADI 🔴'; cb.style.borderLeftColor = 'var(--red)';
-      
-      $('sideBuyPoint').textContent = 'İPTAL / SİNYAL YOK'; $('sideBuyPoint').className = "down-text";
-      $('sideTarget1').textContent = 'İPTAL'; $('sideTarget1').className = "down-text";
-      $('sideTarget2').textContent = 'İPTAL'; $('sideTarget2').className = "down-text";
-      $('sideStop').textContent = `$${formatPrice(a.stopPrice, p)}`; $('sideStop').className = "down-text";
+    } else if (a.signalType === 'TAKE_PROFIT') {
+      // ROBOT KÂR ALIP ÇIKTIĞINDA PANELİ ANINDA GÜNCELLE VE UYAR
+      sb.className = 'status-badge-indicator take'; st.textContent = '🎯 KÂR ALINDI / NAKİT 💰'; cb.style.borderLeftColor = 'var(--yellow)';
+      $('sideBuyPoint').textContent = 'POZİSYON KAPATILDI'; $('sideBuyPoint').className = "up-text";
+      $('sideTarget1').textContent = 'BAŞARIYLA GERÇEKLEŞTİ';
+      $('sideTarget2').textContent = 'HEDEF İPTAL (GÜVENLİ ÇIKIŞ)';
+      $('sideStop').textContent = 'PASİF'; $('sideStop').className = "";
 
-      // Sadece 1 tane Satış Etiketi Bas
+      // Tepedeki muma net çıkış etiketi koy
       state.candleSeries.setMarkers([{
-        time: a.markerTime, position: 'aboveBar', color: '#f6465d', shape: 'arrowDown', text: `SAT: $${formatPrice(a.triggerPrice, p)}`, size: 2
+        time: a.markerTime, position: 'aboveBar', color: '#f0b90b', shape: 'arrowDown', text: `TEPEDEN KÂR AL ÇIK: $${formatPrice(a.highestPriceAfterBuy, p)}`, size: 2.2
       }]);
-      // Satışta hedef çizgilerini kaldır, sadece stop kalsın
       state.priceLines.forEach(l => state.candleSeries.removePriceLine(l));
-      state.priceLines = [];
-      state.priceLines.push(state.candleSeries.createPriceLine({ price: a.stopPrice, color: '#f6465d', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'STOP' }));
 
     } else {
       sb.className = 'status-badge-indicator neut'; st.textContent = 'İZLEME MODU ⏳'; cb.style.borderLeftColor = 'var(--blue)';
       $('sideBuyPoint').textContent = 'BEKLEMEDE'; $('sideBuyPoint').className = "";
-      $('sideTarget1').textContent = '-'; $('sideTarget1').className = "";
-      $('sideTarget2').textContent = '-'; $('sideTarget2').className = "";
-      $('sideStop').textContent = '-'; $('sideStop').className = "";
+      $('sideTarget1').textContent = '-'; $('sideTarget2').textContent = '-'; $('sideStop').textContent = '-';
       state.candleSeries.setMarkers([]);
       state.priceLines.forEach(l => state.candleSeries.removePriceLine(l));
     }
 
     $('robotCommentaryText').textContent = a.text;
 
-    // Alt Metrik Panellerinin Güncellenmesi
-    const dummyVol = (a.score > 50 ? 1.8 : 0.4);
-    $('indVolVal').innerHTML = dummyVol > 1 ? `HACİMLİ <span class="up-text">▲</span>` : `SAKİN <span class="down-text">▼</span>`;
-    $('indVolSub').textContent = `X ${dummyVol} Hacim`;
-    $('indMoneyVal').innerHTML = a.score > 50 ? `PARA GİRİŞİ <span class="up-text">▲</span>` : `PARA ÇIKIŞI <span class="down-text">▼</span>`;
-    $('indMoneySub').textContent = a.score > 50 ? 'Net Giriş Aktif' : 'Kurumsal Satış';
-    $('indMomVal').innerHTML = a.score > 50 ? `BOĞA GÜCÜ` : `AYI BASKISI`;
+    // Metrik güncellemeleri
+    $('indVolVal').innerHTML = a.score > 50 ? `HACİMLİ <span class="up-text">▲</span>` : `DENGELİ <span class="down-text">▼</span>`;
+    $('indVolSub').textContent = `Takip Modu`;
+    $('indMoneyVal').innerHTML = a.score > 50 ? `PARA GİRİŞİ <span class="up-text">▲</span>` : `KÂR REALE <span class="down-text">▼</span>`;
+    $('indMoneySub').textContent = a.score > 50 ? 'Net Giriş Aktif' : 'Nakit Koruma';
+    $('indMomVal').innerHTML = a.score > 50 ? `BOĞA GÜCÜ` : `DÜZELTME`;
     $('indMomSub').textContent = `Skor: ${a.score}`;
-    $('indVolatVal').innerHTML = `DENGELİ EMİR`; $('indVolatSub').textContent = `Tahta Stabil`;
+    $('indVolatVal').innerHTML = `TAHTA SAKİN`; $('indVolatSub').textContent = `İşlem Sonu`;
 
     const dashVal = 220 - (220 * (a.score / 100));
     $('gaugeFillPath').style.strokeDashoffset = dashVal;
     $('gaugeValueSpan').textContent = `${a.score}/100`;
-    $('gaugeTextSpan').textContent = a.score >= 70 ? 'ALIM BÖLGESİ' : (a.score <= 30 ? 'SATIŞ BÖLGESİ' : 'NÖTR ALAN');
+    $('gaugeTextSpan').textContent = a.score >= 70 ? 'ALIM BÖLGESİ' : 'GÜVENLİ NAKİT';
   }
 
   function drawLines(sup, t1, t2) {
