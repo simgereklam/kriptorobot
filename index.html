@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KRİPTO AI ROBOT V5 - RAKAMSAL SİNYAL MOTORU</title>
+  <title>KRİPTO AI ROBOT V5 - MUM ETİKETLİ SİSTEM</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
   <style>
@@ -98,6 +98,7 @@
 
 <div class="app">
   
+  <!-- 1. SOL PANEL -->
   <aside class="card left-sidebar">
     <div class="brand-area">
       <div class="brand-title">KRİPTO AI ROBOT V5</div>
@@ -121,6 +122,7 @@
     </div>
   </aside>
 
+  <!-- 2. MERKEZ PANEL -->
   <main class="main-panel">
     <nav class="top-navbar">
       <div class="nav-left"><div class="nav-status"><span class="dot"></span><b>EMİR AKIŞI AKTİF</b></div></div>
@@ -151,6 +153,7 @@
     </footer>
   </main>
 
+  <!-- 3. SAĞ PANEL -->
   <aside class="card right-sidebar">
     <div class="panel-header"><h3>🤖 STRATEJİK EMİR KOMUTANI</h3></div>
     <div class="scroll-content">
@@ -267,7 +270,7 @@
     }).observe($('chart'));
   }
 
-  // YENİ RAKAMSAL ANALİZ MOTORU
+  // SİNYAL MOTORU VE SEVİYE HESAPLAMA
   function analyzeCandles(candles) {
     if (candles.length < 5) return null;
     const last = candles[candles.length - 1];
@@ -283,30 +286,70 @@
     const currentPrice = last.close;
     const precision = getPrecision(currentPrice);
     
-    // Matematiksel Seviyeler
     const supportPrice = Math.min(prev.low, prev2.low);
-    const stopPrice = supportPrice * 0.995; // Desteğin %0.5 altı acil çıkış
-    const target1 = currentPrice * 1.025;   // %2.5 Kâr Al
-    const target2 = currentPrice * 1.055;   // %5.5 Balina Hedefi
+    const stopPrice = supportPrice * 0.995; 
+    const target1 = currentPrice * 1.025;   
+    const target2 = currentPrice * 1.055;   
 
     let score = 50, signalType = 'IZLEME', text = '';
 
-    // DURUM 1: NET STRATEJİK ALIM
     if (netFlow > 0 && currentPrice > prev.high && volRatio > 1.25) {
       signalType = 'ALIM'; score = 90;
       text = `🟢 ALIM EMRİ AKTİF: $${formatPrice(currentPrice, precision)} seviyesinden işleme giriş uygun. Net para akışı pozitif. $${formatPrice(target1, precision)} seviyesinde ilk kâr satışı yap; ana balina hedefi olan $${formatPrice(target2, precision)} gelirse tamamen pozisyonu boşalt. $${formatPrice(stopPrice, precision)} altında saatlik kapanış gelirse tereddüt etmeden stop ol!`;
     } 
-    // DURUM 2: RAKAMSAL ACİL TAHLİYE (STOP)
     else if (currentPrice <= supportPrice || (netFlow < 0 && volRatio > 1.4)) {
       signalType = 'KAÇ'; score = 15;
       text = `🚨 ACİL TAHLİYE / STOP KOMUTU: Fiyat kritik baremi kırdı veya güçlü kurumsal satış yedi. Eğer maldaysan $${formatPrice(stopPrice, precision)} seviyesi son çıkış kapısıdır, alta sarkarsa zarar büyür! Yeniden alım için fiyatın sakinleşmesi beklenmeli.`;
     } 
-    // DURUM 3: BOŞTA / İZLEME VE PUSULA SEVİYELERİ
     else {
       text = `⏳ BEKLEMEDE / KONSOLİDASYON: Tahta şu an kararsız. Aktif fiyat $${formatPrice(currentPrice, precision)}. Eğer fiyat yukarı yönlü kafayı kaldırıp $${formatPrice(prev.high * 1.002, precision)} seviyesini aşarsa alım tetiklenebilir. Aşağıda $${formatPrice(supportPrice, precision)} desteği kırılırsa satış baskısı derinleşir. Rakamsal kırılım bekleyin.`;
     }
 
-    return { score, signalType, text, currentPrice, supportPrice, target1, target2, stopPrice, volRatio, netFlow, precision };
+    return { score, signalType, text, currentPrice, supportPrice, target1, target2, stopPrice, volRatio, netFlow, precision, lastTime: last.time };
+  }
+
+  // YENİ EKLEMELER: MUM ÜSTÜ ETİKETLERİ (MARKERS) DÖKME SİSTEMİ
+  function generateChartMarkers(candles) {
+    const markers = [];
+    // Son 40 mumu tarayarak güçlü sinyal oluşmuş bölgeleri geçmişe dönük de etiketler
+    const startIdx = Math.max(2, candles.length - 40);
+    
+    for (let i = startIdx; i < candles.length; i++) {
+      const c = candles[i];
+      const p = candles[i-1];
+      const p2 = candles[i-2];
+      
+      const rVolAvg = (p.volume + p2.volume) / 2;
+      const vRatio = c.volume / (rVolAvg || 1);
+      const nFlow = c.takerQuoteVolume - (c.quoteVolume - c.takerQuoteVolume);
+      const prec = getPrecision(c.close);
+
+      // Geçmiş mumda Alım şartı oluşmuş mu?
+      if (nFlow > 0 && c.close > p.high && vRatio > 1.25) {
+        markers.push({
+          time: c.time,
+          position: 'belowBar',
+          color: '#0ecb81',
+          shape: 'arrowUp',
+          text: `AL: $${formatPrice(c.close, prec)}`,
+          size: 1.5
+        });
+      }
+      // Geçmiş mumda Kaçış / Stop şartı oluşmuş mu?
+      else if (c.close <= Math.min(p.low, p2.low) || (nFlow < 0 && vRatio > 1.4)) {
+        markers.push({
+          time: c.time,
+          position: 'aboveBar',
+          color: '#f6465d',
+          shape: 'arrowDown',
+          text: `SAT/KAÇ: $${formatPrice(c.close, prec)}`,
+          size: 1.5
+        });
+      }
+    }
+    
+    // Etiketleri mum grafiğine gömüyoruz
+    state.candleSeries.setMarkers(markers);
   }
 
   function updateUI(a) {
@@ -315,7 +358,6 @@
 
     $('sidePrice').textContent = `$${formatPrice(a.currentPrice, p)}`;
     
-    // Alım, Satım ve Stop Rakamlarının Sağ Panele Çakılması
     if (a.signalType === 'ALIM') {
       $('sideBuyPoint').textContent = `$${formatPrice(a.currentPrice, p)}`;
       $('sideBuyPoint').className = "up-text";
@@ -365,6 +407,9 @@
     $('gaugeTextSpan').textContent = a.score >= 75 ? 'ALIM BÖLGESİ' : (a.score <= 35 ? 'TEHLİKE BÖLGESİ' : 'NÖTR ALAN');
 
     drawLines(a.stopPrice, a.target1, a.target2);
+    
+    // UI güncellenirken etiketleri de yeniden ürettiriyoruz
+    generateChartMarkers(state.candles);
   }
 
   function drawLines(sup, t1, t2) {
