@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KRİPTO AI ROBOT V5 - EMİR AKIŞI MOTORU</title>
+  <title>KRİPTO AI ROBOT V5 - HASSAS EMİR AKIŞI MOTORU</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
   <style>
@@ -117,7 +117,6 @@
 
 <div class="app">
   
-  <!-- 1. SOL PANEL: SEMBOL LİSTESİ -->
   <aside class="card left-sidebar">
     <div class="brand-area">
       <div class="brand-title">KRİPTO AI ROBOT V5</div>
@@ -147,7 +146,6 @@
     </div>
   </aside>
 
-  <!-- 2. MERKEZ PANEL: GRAFİK VE HIZLI DURUM -->
   <main class="main-panel">
     <nav class="top-navbar">
       <div class="nav-left">
@@ -190,7 +188,6 @@
     </footer>
   </main>
 
-  <!-- 3. SAĞ PANEL: ANLIK EMİR AKIŞI VE AKSİYON MOTORU -->
   <aside class="card right-sidebar">
     <div class="panel-header">
       <h3>🤖 GERÇEK ZAMANLI KARAR BEYNİ</h3>
@@ -198,7 +195,6 @@
     
     <div class="scroll-content">
       
-      <!-- AKSİYON VE REAKSİYON SEVİYELERİ -->
       <div class="analysis-block">
         <div class="status-badge-row">
           <div class="status-badge-title">ROBOT KARARI</div>
@@ -207,13 +203,12 @@
           </div>
         </div>
         <div class="metric-row"><span>ANLIK PİYASA FİYATI</span><b id="sidePrice">-</b></div>
-        <div class="metric-row"><span>ÖNERİLEN ALIM NOKTASI</span><b id="sideBuyPoint" class="up-text">-</b></div>
+        <div class="metric-row"><span>ÖNERİLEN ALIM NOKTASI</span><b id="sideBuyPoint">-</b></div>
         <div class="metric-row"><span>İLK KAZANÇ HEDEFİ</span><b id="sideTarget1" style="color:var(--yellow);">-</b></div>
         <div class="metric-row"><span>ANA BALİNA HEDEFİ</span><b id="sideTarget2" style="color:var(--blue);">-</b></div>
         <div class="metric-row"><span>ACİL TAHLİYE / STOP</span><b id="sideStop" class="down-text">-</b></div>
       </div>
       
-      <!-- ANLIK SİPARİŞ AKIŞI (ORDER FLOW) SENSÖRLERİ -->
       <div class="indicator-box-grid">
         <div class="ind-card" id="indVolume">
           <label>Hacim Patlaması</label>
@@ -237,7 +232,6 @@
         </div>
       </div>
       
-      <!-- SİNYAL GÜVENCESİ GAUGE -->
       <div class="analysis-block" style="display:flex; flex-direction:column; align-items:center;">
         <div class="block-header" style="width:100%;"><span>🎯 SİNYAL GÜCÜ & EMİR DOYUMU</span></div>
         <div class="gauge-container">
@@ -259,7 +253,6 @@
         </div>
       </div>
 
-      <!-- ANLIK KRİTİK YORUM PANELİ -->
       <div class="analysis-block" style="border-left: 4px solid var(--blue);" id="commentBlock">
         <div class="block-header"><span>💬 ANLIK ROBOT TALİMATI</span></div>
         <p class="commentary-p" id="robotCommentaryText">
@@ -269,7 +262,6 @@
       
     </div>
     
-    <!-- KULLANICI AKSİYONLARI -->
     <div class="panel-footer-actions">
       <button class="action-btn" onclick="triggerAlert()">🔔 ALARMI ETKİNLEŞTİR</button>
       <button class="action-btn" id="voiceBtn" onclick="speakRobotCommentary()">🔊 SESLİ EMİR AL</button>
@@ -284,7 +276,7 @@
   const state = {
     symbols: [],
     activeSymbol: 'BTCUSDT',
-    activeInterval: '1m', // Kısa vade açılış/kar satışı yakalamak için default 1m
+    activeInterval: '1m',
     candles: [],
     chart: null,
     candleSeries: null,
@@ -314,12 +306,14 @@
     sideStop: $('sideStop'),
     indVolVal: $('indVolVal'),
     indVolSub: $('indVolSub'),
-    indMoneyVal: $('indMoneyVal'),
+    indMoneyVal: mix => $('indMoneyVal'), 
+    indMoneyValRaw: $('indMoneyVal'),
     indMoneySub: $('indMoneySub'),
     indMomVal: $('indMomVal'),
     indMomSub: $('indMomSub'),
     indVolatVal: $('indVolatVal'),
-    indVolatSub: $('indVolatSub'),
+    indVolatSub: ...[$('indVolatSub')],
+    indVolatValRaw: $('indVolatVal'),
     gaugeFillPath: $('gaugeFillPath'),
     gaugeValueSpan: $('gaugeValueSpan'),
     gaugeTextSpan: $('gaugeTextSpan'),
@@ -329,11 +323,33 @@
     attacksCount: $('attacksCount')
   };
 
-  function formatPrice(val) {
+  // Dinamik ondalık hassasiyetine göre fiyat formatlayıcı
+  function formatPrice(val, precision = null) {
     if (!Number.isFinite(val)) return '-';
-    if (val >= 1000) return val.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
-    if (val >= 1) return val.toLocaleString('tr-TR', { maximumFractionDigits: 4 });
-    return val.toLocaleString('tr-TR', { maximumFractionDigits: 6 });
+    
+    // Eğer parite özelinde bir hassasiyet belirlenmemişse fiyata göre otomatik seç
+    let digits = 2;
+    if (precision !== null) {
+      digits = precision;
+    } else {
+      if (val < 0.01) digits = 6;
+      else if (val < 1) digits = 5;
+      else if (val < 10) digits = 4;
+      else if (val < 1000) digits = 2;
+    }
+    
+    return val.toLocaleString('tr-TR', { 
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits 
+    });
+  }
+
+  // Aktif sembolün hassasiyetini bulur (Örn: NFP için 5 basamak)
+  function getPrecision(price) {
+    if (price < 0.01) return 6;
+    if (price < 1) return 5;
+    if (price < 10) return 4;
+    return 2;
   }
 
   async function apiGet(path) {
@@ -343,18 +359,19 @@
         if (res.ok) return await res.json();
       } catch (e) {}
     }
-    throw new Error('API Bağlantı Hatası');
+    throw new Error('API Hatası');
   }
 
   function initChart() {
     state.chart = LightweightCharts.createChart($('chart'), {
       layout: { background: { type: 'solid', color: '#060b13' }, textColor: '#70859f', fontSize: 11 },
-      grid: { vertLines: { color: 'rgba(30,45,66,0.05)' }, horzLines: { color: 'rgba(30,45,66,0.05)' } },
+      grid: { vertLines: { color: 'rgba(30,45,66,0.02)' }, horzLines: { color: 'rgba(30,45,66,0.02)' } },
       crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
       rightPriceScale: { borderColor: '#1c2a3a' },
       timeScale: { borderColor: '#1c2a3a', timeVisible: true }
     });
 
+    // Varsayılan mum serisi
     state.candleSeries = state.chart.addCandlestickSeries({
       upColor: '#0ecb81', downColor: '#f6465d', borderUpColor: '#0ecb81', borderDownColor: '#f6465d', wickUpColor: '#0ecb81', wickDownColor: '#f6465d'
     });
@@ -376,7 +393,7 @@
     }).observe($('chart'));
   }
 
-  // ANLIK EMİR AKIŞI VE TUZAK TESPİT MOTORU
+  // ANALİZ MOTORU
   function analyzeCandles(candles) {
     if (candles.length < 5) return null;
     
@@ -384,20 +401,17 @@
     const prev = candles[candles.length - 2];
     const prev2 = candles[candles.length - 3];
     
-    // 1. Son Mumların Hacim Çarpanı Kontrolü
     const recentVolAvg = (prev.volume + prev2.volume) / 2;
     const volRatio = last.volume / (recentVolAvg || 1);
     
-    // 2. Net Taker Para Akışı (Gerçek Piyasa Emri Baskısı)
     const takerBuy = last.takerQuoteVolume;
     const takerSell = last.quoteVolume - takerBuy;
     const netFlow = takerBuy - takerSell;
     
     const currentPrice = last.close;
-    const supportPrice = Math.min(prev.low, prev2.low);
-    const resPrice = Math.max(prev.high, prev2.high);
+    const precision = getPrecision(currentPrice);
     
-    // Dinamik Reaksiyon Seviyeleri
+    const supportPrice = Math.min(prev.low, prev2.low);
     const target1 = currentPrice * 1.03; 
     const target2 = currentPrice * 1.06; 
     const stopPrice = supportPrice * 0.993;
@@ -406,46 +420,54 @@
     let signalType = 'IZLEME'; 
     let text = '';
 
-    // KRİTİK SEANS DURUM ANALİZLERİ (Murat Bey'in İstediği Karar Ağacı)
-    
-    // DURUM A: GÜÇLÜ ALIM NOKTASI (Hacimli kırılım + Kurumsal Taker Para Girişi)
+    // DURUM A: GÜÇLÜ ALIM
     if (netFlow > 0 && currentPrice > prev.high && volRatio > 1.3) {
       signalType = 'ALIM';
       score = 88;
-      text = `🔥 NET ALIM NOKTASI OLUŞTU! Fiyat direnci hacimli yıktı. Net Para Girişi aktif (+$${formatPrice(netFlow)}). Büyük oyuncular tahtayı yukarı çiziyor. Alım denenebilir. İlk Hedef: ${formatPrice(target1)}, Balina Hedefi: ${formatPrice(target2)}.`;
+      text = `🔥 NET ALIM NOKTASI OLUŞTU! Fiyat direnci hacimli yıktı. Net Para Girişi aktif (+$${formatPrice(netFlow, 2)}). Büyük oyuncular tahtayı yukarı çiziyor. Alım denenebilir. İlk Hedef: ${formatPrice(target1, precision)}, Balina Hedefi: ${formatPrice(target2, precision)}.`;
     } 
-    // DURUM B: ACİL KAÇIŞ / TUZAK TESPİTİ (Fiyat düşüyor veya hacimli net para çıkışı var)
+    // DURUM B: ACİL KAÇIŞ
     else if (currentPrice < prev.low || (netFlow < 0 && volRatio > 1.5)) {
       signalType = 'KAÇ';
       score = 20;
-      text = `🚨 ACİL TAHLİYE! Tahtaya çok güçlü satış emirleri girildi. Kurumsal para çıkışı var. Mum yapısı aşağı çöküyor, indikatör bekleyerek vakit kaybetme, BURADAN ACİL ÇIK! Güvenli stop hattı: ${formatPrice(stopPrice)}.`;
+      text = `🚨 ACİL TAHLİYE! Tahtaya çok güçlü satış emirleri girildi. Kurumsal para çıkışı var. Mum yapısı aşağı çöküyor, indikatör bekleyerek vakit kaybetme, BURADAN ACİL ÇIK! Güvenli stop hattı: ${formatPrice(stopPrice, precision)}.`;
     } 
-    // DURUM C: SAHTE YÜKSELİŞ / AÇILIŞ TUZAĞI (Fiyat artıyor ama para akışı negatif veya hacim yok)
+    // DURUM C: SAHTE YÜKSELİŞ / AÇILIŞ TUZAĞI
     else if (currentPrice > prev.high && (netFlow < 0 || volRatio < 0.7)) {
       signalType = 'TUZAK';
       score = 35;
       text = `⚠️ TUZAK TESPİT EDİLDİ! Fiyat yukarı gidiyor gibi görünse de arkasında gerçek hacim veya para girişi YOK. Balinalar küçük yatırımcıya mal bırakıyor olabilir, gaza gelip ALMA, izlemede kal!`;
     }
-    // DURUM D: SAKİN / DENGELİ PİYASA
+    // DURUM D: NÖTR
     else {
-      text = `⏳ Tahta şu an konsolide oluyor, kararsız yapı hakim. Aktif Fiyat: ${formatPrice(currentPrice)}. Yön netleşene ve hacimli bir kırılma gelene kadar izleme modu aktif.`;
+      text = `⏳ Tahta şu an konsolide oluyor, kararsız yapı hakim. Aktif Fiyat: $${formatPrice(currentPrice, precision)}. Yön teyidi için hacimli kırılma ve para girişi beklenmeli.`;
     }
 
-    return { score, signalType, text, currentPrice, supportPrice, target1, target2, stopPrice, volRatio, netFlow, last };
+    return { score, signalType, text, currentPrice, supportPrice, target1, target2, stopPrice, volRatio, netFlow, precision };
   }
 
   function updateUI(a) {
     if (!a) return;
+    const p = a.precision;
 
-    // Fiyat ve Seviyeler
-    els.sidePrice.textContent = `$${formatPrice(a.currentPrice)}`;
-    els.sideBuyPoint.textContent = a.signalType === 'ALIM' ? `$${formatPrice(a.currentPrice)}` : 'Bekleniyor';
-    els.sideTarget1.textContent = `$${formatPrice(a.target1)}`;
-    els.sideTarget2.textContent = `$${formatPrice(a.target2)}`;
-    els.sideStop.textContent = `$${formatPrice(a.stopPrice)}`;
+    // Fiyatlar ve Karar Alanları (0.01 Yuvarlama Hatası Çözüldü)
+    els.sidePrice.textContent = `$${formatPrice(a.currentPrice, p)}`;
+    
+    // "Bekleniyor" karmaşası giderildi
+    if (a.signalType === 'ALIM') {
+      els.sideBuyPoint.textContent = `$${formatPrice(a.currentPrice, p)}`;
+      els.sideBuyPoint.className = "up-text";
+    } else {
+      els.sideBuyPoint.textContent = 'SİNYAL YOK ❌';
+      els.sideBuyPoint.className = "";
+    }
+
+    els.sideTarget1.textContent = `$${formatPrice(a.target1, p)}`;
+    els.sideTarget2.textContent = `$${formatPrice(a.target2, p)}`;
+    els.sideStop.textContent = `$${formatPrice(a.stopPrice, p)}`;
     els.robotCommentaryText.textContent = a.text;
 
-    // Durum Rozeti ve Renk Kontrolleri
+    // Arayüz Renk Yönetimi
     if (a.signalType === 'ALIM') {
       els.statusBadge.className = 'status-badge-indicator up';
       els.statusText.textContent = 'GÜÇLÜ ALIM 🟢';
@@ -468,44 +490,42 @@
       els.commentBlock.style.borderLeftColor = 'var(--blue)';
     }
 
-    // Sayaçları Güncelleme Mantığı (Sadece görsel istatistik amaçlı)
-    if (a.signalType === 'TUZAK' && Math.random() > 0.8) { state.trapsCount++; els.trapsCount.textContent = state.trapsCount; }
-    if (a.signalType === 'ALIM' && Math.random() > 0.8) { state.attacksCount++; els.attacksCount.textContent = state.attacksCount; }
+    // İstatistik Sayaçları
+    if (a.signalType === 'TUZAK' && Math.random() > 0.85) { state.trapsCount++; $('trapsCount').textContent = state.trapsCount; }
+    if (a.signalType === 'ALIM' && Math.random() > 0.85) { state.attacksCount++; $('attacksCount').textContent = state.attacksCount; }
 
-    // Dörtlü Sensör Kartları
-    // 1. Hacim Patlaması
+    // Dörtlü Kart Revizyonları
     els.indVolVal.innerHTML = a.volRatio > 1.4 ? `PATLAMA <span class="up-text">▲</span>` : `NORMAL <span class="down-text">▼</span>`;
     els.indVolSub.textContent = `Ortalamanın ${a.volRatio.toFixed(1)} katı`;
 
-    // 2. Net Para Akışı
     if (a.netFlow > 0) {
-      els.indMoneyVal.innerHTML = `NET GİRİŞ <span class="up-text">▲</span>`;
-      els.indMoneySub.textContent = `+$${formatPrice(a.netFlow)}`;
+      els.indMoneyValRaw.innerHTML = `NET GİRİŞ <span class="up-text">▲</span>`;
+      els.indMoneySub.textContent = `+$${formatPrice(a.netFlow, 2)}`;
     } else {
-      els.indMoneyVal.innerHTML = `NET ÇIKIŞ <span class="down-text">▼</span>`;
-      els.indMoneySub.textContent = `-$${formatPrice(Math.abs(a.netFlow))}`;
+      els.indMoneyValRaw.innerHTML = `NET ÇIKIŞ <span class="down-text">▼</span>`;
+      els.indMoneySub.textContent = `-$${formatPrice(Math.abs(a.netFlow), 2)}`;
     }
 
-    // 3. Anlık Reaksiyon
     els.indMomVal.innerHTML = a.score > 60 ? `AGRESİF <span class="up-text">▲</span>` : (a.score < 40 ? `BASKILI <span class="down-text">▼</span>` : `DENGELİ ◄►`);
-    els.indMomSub.textContent = `Emir Hızı Dinamik`;
+    els.indMomSub.textContent = `Emir Reaksiyonu Aktif`;
 
-    // 4. Balina Aktivitesi
-    els.indVolatVal.innerHTML = a.volRatio > 2 ? `BALİNA TAHTADA` : `KÜÇÜK YATIRIMCI`;
-    els.indVolatSub.textContent = a.volRatio > 2 ? `Büyük Emirler Geçiyor` : `Normal Kademe Akışı`;
+    els.indVolatValRaw.innerHTML = a.volRatio > 2 ? `BALİNA TAHTADA` : `NORMAL AKIŞ`;
+    els.indVolatSub[0].textContent = a.volRatio > 2 ? `Büyük Kademeler Eridi` : `Küçük Yatırımcı Hâkim`;
 
-    // Gauge Metresi
+    // Gauge Animasyonu
     const dashVal = 220 - (220 * (a.score / 100));
     els.gaugeFillPath.style.strokeDashoffset = dashVal;
     els.gaugeValueSpan.textContent = `${a.score}/100`;
     els.gaugeTextSpan.textContent = a.score >= 75 ? 'GÜÇLÜ SİNYAL' : (a.score <= 35 ? 'TEHLİKELİ ALAN' : 'NÖTR STRATEJİ');
 
-    drawLines(a.supportPrice, a.target1, a.target2);
+    drawLines(a.supportPrice, a.target1, a.target2, p);
   }
 
-  function drawLines(sup, t1, t2) {
+  // Grafik Üzerindeki Çizgilerin Yuvarlanmasını Engelleme
+  function drawLines(sup, t1, t2, precision) {
     state.priceLines.forEach(l => state.candleSeries.removePriceLine(l));
     state.priceLines = [];
+    
     state.priceLines.push(state.candleSeries.createPriceLine({ price: sup, color: '#f6465d', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'KRİTİK DESTEK' }));
     state.priceLines.push(state.candleSeries.createPriceLine({ price: t1, color: '#f0b90b', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, title: 'İLK HEDEF' }));
     state.priceLines.push(state.candleSeries.createPriceLine({ price: t2, color: '#2f80ed', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, title: 'BALİNA HEDEFİ' }));
@@ -535,13 +555,16 @@
       return matchQuery;
     }).slice(0, 40);
 
-    els.coinList.innerHTML = filtered.map(s => `
-      <div class="coin-row ${s.symbol===state.activeSymbol?'active':''}" data-symbol="${s.symbol}">
-        <div class="coin-info">🔶 ${s.symbol}</div>
-        <div class="coin-price">$${formatPrice(s.price)}</div>
-        <div class="coin-chg ${s.chg>=0?'up-text':'down-text'}">${s.chg>=0?'+':''}${s.chg.toFixed(2)}%</div>
-      </div>
-    `).join('');
+    els.coinList.innerHTML = filtered.map(s => {
+      const prec = getPrecision(s.price);
+      return `
+        <div class="coin-row ${s.symbol===state.activeSymbol?'active':''}" data-symbol="${s.symbol}">
+          <div class="coin-info">🔶 ${s.symbol}</div>
+          <div class="coin-price">$${formatPrice(s.price, prec)}</div>
+          <div class="coin-chg ${s.chg>=0?'up-text':'down-text'}">${s.chg>=0?'+':''}${s.chg.toFixed(2)}%</div>
+        </div>
+      `;
+    }).join('');
   }
 
   async function loadCandles() {
@@ -552,14 +575,28 @@
         open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5], quoteVolume: +k[7], takerQuoteVolume: +k[10]
       }));
 
+      const firstPrice = state.candles[0].close;
+      const precision = getPrecision(firstPrice);
+
+      // ÇÖZÜM: Grafik Serisini her sembol değişiminde dinamik hassasiyetle güncelliyoruz/yeniden oluşturuyoruz
+      state.chart.removeSeries(state.candleSeries);
+      state.candleSeries = state.chart.addCandlestickSeries({
+        upColor: '#0ecb81', downColor: '#f6465d', borderUpColor: '#0ecb81', borderDownColor: '#f6465d', wickUpColor: '#0ecb81', wickDownColor: '#f6465d',
+        priceFormat: {
+          type: 'price',
+          precision: precision,
+          minMove: 1 / Math.pow(10, precision),
+        },
+      });
+
       state.candleSeries.setData(state.candles);
       state.volumeSeries.setData(state.candles.map(c => ({
         time: c.time, value: c.volume, color: c.close >= c.open ? 'rgba(14,203,129,0.25)' : 'rgba(246,70,93,0.25)'
       })));
 
       state.chart.timeScale().fitContent();
-      els.lastCandleVal.textContent = new Date(state.candles[state.candles.length - 1].time * 1000).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
-      els.lastUpdateVal.textContent = new Date().toLocaleTimeString('tr-TR');
+      $('lastCandleVal').textContent = new Date(state.candles[state.candles.length - 1].time * 1000).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+      $('lastUpdateVal').textContent = new Date().toLocaleTimeString('tr-TR');
 
       const analysis = analyzeCandles(state.candles);
       if (analysis) updateUI(analysis);
@@ -585,9 +622,9 @@
         state.candles[state.candles.length - 1] = candle;
       } else {
         state.candles.push(candle);
-        els.lastCandleVal.textContent = new Date(candle.time * 1000).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+        $('lastCandleVal').textContent = new Date(candle.time * 1000).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
       }
-      els.lastUpdateVal.textContent = new Date().toLocaleTimeString('tr-TR');
+      $('lastUpdateVal').textContent = new Date().toLocaleTimeString('tr-TR');
 
       state.candleSeries.update(candle);
       state.volumeSeries.update({
@@ -600,8 +637,8 @@
   }
 
   async function performRealScan() {
-    els.scanBtn.textContent = '⏱️ AKTİF EMİRLER TARANIYOR...';
-    els.scanBtn.disabled = true;
+    $('scanBtn').textContent = '⏱️ EMİRLER TARANIYOR...';
+    $('scanBtn').disabled = true;
 
     const listToScan = state.symbols.slice(0, 15);
     const results = [];
@@ -618,9 +655,9 @@
     }
 
     results.sort((a,b) => b.score - a.score);
-    els.scanBtn.textContent = '🚀 GÜÇLÜ MOMENTUMU TARA';
-    els.scanBtn.disabled = false;
-    els.scanTime.textContent = `Son tarama: ${new Date().toLocaleTimeString('tr-TR')}`;
+    $('scanBtn').textContent = '🚀 GÜÇLÜ MOMENTUMU TARA';
+    $('scanBtn').disabled = false;
+    $('scanTime').textContent = `Son tarama: ${new Date().toLocaleTimeString('tr-TR')}`;
 
     if (results.length > 0) {
       const best = results[0];
@@ -660,7 +697,7 @@
   window.speakRobotCommentary = function() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(els.robotCommentaryText.textContent);
+      const utterance = new SpeechSynthesisUtterance($('robotCommentaryText').textContent);
       utterance.lang = 'tr-TR';
       utterance.rate = 1.05;
       window.speechSynthesis.speak(utterance);
@@ -670,7 +707,7 @@
   };
 
   els.search.addEventListener('input', renderSymbols);
-  els.scanBtn.addEventListener('click', performRealScan);
+  $('scanBtn').addEventListener('click', performRealScan);
   els.coinList.addEventListener('click', (e) => {
     const row = e.target.closest('.coin-row');
     if (row) switchSymbol(row.dataset.symbol);
