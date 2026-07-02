@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KRİPTO AI ROBOT V9 - SAF HACİM MOTORU</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.2.2/lightweight-charts.standalone.production.js"></script>
+  <!-- Grafik Kütüphanesi Üst Kısmına Yükleme Garantisi Verildi -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     :root {
       --bg: #060b13; 
@@ -21,8 +22,8 @@
       --radius: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background-color: var(--bg); color: var(--txt); overflow: hidden; height: 100vh; }
-    .app { display: grid; grid-template-columns: 280px minmax(0, 1fr) 340px; height: 100vh; background-color: var(--bg); }
+    body { background-color: var(--bg); color: var(--txt); overflow: hidden; height: 100vh; width: 100vw; }
+    .app { display: grid; grid-template-columns: 280px minmax(0, 1fr) 340px; height: 100vh; width: 100vw; background-color: var(--bg); }
     .card { background: var(--panel); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
     
     /* SOL PANEL */
@@ -45,18 +46,22 @@
     .scan-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fff; color: #000; font-weight: 800; font-size: 12px; border: 0; padding: 10px; border-radius: 6px; cursor: pointer; }
     
     /* MERKEZ PANEL */
-    .main-panel { display: grid; grid-template-rows: 60px minmax(0, 1fr) 50px; min-width: 0; border-right: 1px solid var(--line); }
+    .main-panel { display: grid; grid-template-rows: 60px minmax(0, 1fr) 50px; min-width: 0; border-right: 1px solid var(--line); height: 100vh; }
     .top-navbar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: var(--panel); }
     .nav-left { display: flex; align-items: center; gap: 20px; }
     .nav-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
     .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
     .nav-right { display: flex; align-items: center; gap: 15px; font-size: 11px; color: var(--muted); }
-    .chart-box { position: relative; width: 100%; height: 100%; min-height: 200px; background: var(--bg); flex: 1; }
+    
+    .chart-container-wrapper { display: flex; flex-direction: column; height: 100%; min-height: 0; flex: 1; background: var(--bg); }
     .chart-control-bar { padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
     .timeframes { display: flex; gap: 4px; }
     .tf-btn { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; }
     .tf-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
     .live-symbol-title { font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
+    
+    .chart-box { position: relative; width: 100%; flex: 1; min-height: 0; background: var(--bg); }
+    #chart { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     .bottom-status-bar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); background: var(--panel); font-size: 11px; color: var(--muted); }
     
     /* SAĞ PANEL */
@@ -92,6 +97,7 @@
 
 <div class="app">
   
+  <!-- SOL PANEL -->
   <aside class="card left-sidebar">
     <div class="brand-area">
       <div class="brand-title">KRİPTO AI ROBOT V9</div>
@@ -114,6 +120,7 @@
     </div>
   </aside>
 
+  <!-- MERKEZ PANEL -->
   <main class="main-panel">
     <nav class="top-navbar">
       <div class="nav-left"><div class="nav-status"><span class="dot"></span><b>SAF HACİM & FITIL REAKSİYON MOTORU AKTİF</b></div></div>
@@ -122,7 +129,7 @@
         <span>🕒 MUM: <b id="lastCandleVal">-</b></span>
       </div>
     </nav>
-    <div style="display:flex; flex-direction:column; height:100%; min-height:0; flex:1;">
+    <div class="chart-container-wrapper">
       <div class="chart-control-bar">
         <div class="live-symbol-title" id="activeSymbolTitle">BTCUSDT <span>15m</span></div>
         <div class="timeframes">
@@ -133,7 +140,9 @@
           <button class="tf-btn" id="tf-4h" onclick="changeInterval('4h')">4h</button>
         </div>
       </div>
-      <div class="chart-box"><div id="chart" style="position:absolute; top:0; left:0; width:100%; height:100%;"></div></div>
+      <div class="chart-box">
+        <div id="chart"></div>
+      </div>
     </div>
     <footer class="bottom-status-bar">
       <div>AI FILTRELEME: <span class="up-text">Aktif (Gecikmesiz İğne Analizi)</span></div>
@@ -142,6 +151,7 @@
     </footer>
   </main>
 
+  <!-- SAĞ PANEL -->
   <aside class="card right-sidebar">
     <div class="panel-header"><h3>🤖 STRATEJİK EMİR KOMUTANI</h3></div>
     <div class="scroll-content">
@@ -177,14 +187,18 @@
 </div>
 
 <script>
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof LightweightCharts === 'undefined') {
+    console.error("TradingView kütüphanesi yüklenemedi! CDN bağlantısını kontrol edin.");
+    return;
+  }
+
   const API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
   
   const state = {
     symbols: [], activeSymbol: 'BTCUSDT', activeInterval: '15m',
     candles: [], chart: null, candleSeries: null, volumeSeries: null,
-    ws: null, priceLines: [], activeTab: 'USDT', 
-    dipCount: 0, tepeCount: 0,
+    ws: null, activeTab: 'USDT', dipCount: 0, tepeCount: 0,
     lastSignal: { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ SAF HACİM ANALİZİ: Piyasa izleniyor. Kurumsal hacim veya derin fitil reaksiyonu aranıyor.' }
   };
 
@@ -236,18 +250,16 @@
       scaleMargins: { top: 0.82, bottom: 0 }, visible: false
     });
 
-    // Ekran boyutlandırma fixlendi
-    setTimeout(() => {
-      if(state.chart && chartContainer.clientWidth > 0) {
-        state.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
-      }
-    }, 200);
-
-    new ResizeObserver(() => {
+    function resizeContainer() {
       if (state.chart && chartContainer.clientWidth > 0) {
         state.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
       }
-    }).observe(chartContainer);
+    }
+
+    setTimeout(resizeContainer, 300);
+    window.addEventListener('resize', resizeContainer);
+    
+    new ResizeObserver(resizeContainer).observe(chartContainer);
   }
 
   function analyzeSingleCandle(candles, index, avgVol) {
@@ -258,11 +270,11 @@
     const hVolume = last.volume > avgVol * 1.3;
 
     if (lowerWick > body * 1.5 && hVolume && last.close > last.open) {
-      return { decision: 'DIP_ALIM', price: last.close, stop: last.close * 0.985, time: last.time, lowerWick, upperWick, hVolume };
+      return { decision: 'DIP_ALIM', price: last.close, stop: last.close * 0.985, time: last.time };
     } else if (upperWick > body * 1.5 && hVolume && last.close < last.open) {
-      return { decision: 'TEPE_SATIM', price: last.close, stop: 0, time: last.time, lowerWick, upperWick, hVolume };
+      return { decision: 'TEPE_SATIM', price: last.close, stop: 0, time: last.time };
     }
-    return { decision: 'IZLEME', price: last.close, stop: 0, time: last.time, lowerWick, upperWick, hVolume };
+    return { decision: 'IZLEME', price: last.close, stop: 0, time: last.time };
   }
 
   function runFullAnalysis() {
@@ -286,24 +298,15 @@
       if (res.decision === 'DIP_ALIM') {
         state.dipCount++;
         markers.push({ time: res.time, position: 'belowBar', color: '#0ecb81', shape: 'arrowUp', text: 'DİP GİRİŞ AL' });
-        
-        state.lastSignal = { 
-          decision: 'DIP_ALIM', price: res.price, stop: res.stop, 
-          msg: `🟢 DOĞRULANMIŞ DİP: Alt fitil patlamasıyla kurumsal alıcılar devreye girdi. DİP GİRİŞ AL seviyesi aktif.` 
-        };
+        state.lastSignal = { decision: 'DIP_ALIM', price: res.price, stop: res.stop, msg: `🟢 DOĞRULANMIŞ DİP: Alt fitil patlamasıyla kurumsal alıcılar devreye girdi. DİP GİRİŞ AL seviyesi aktif.` };
       } else if (res.decision === 'TEPE_SATIM') {
         state.tepeCount++;
         markers.push({ time: res.time, position: 'aboveBar', color: '#f6465d', shape: 'arrowDown', text: 'TEPE ÇIKIŞ SAT' });
-        
-        state.lastSignal = { 
-          decision: 'TEPE_SATIM', price: res.price, stop: 0, 
-          msg: `🔴 DOĞRULANMIŞ TEPE: Üst fitil baskısıyla balinalar mal dağıtıyor. TEPE ÇIKIŞ SAT seviyesi aktif.` 
-        };
+        state.lastSignal = { decision: 'TEPE_SATIM', price: res.price, stop: 0, msg: `🔴 DOĞRULANMIŞ TEPE: Üst fitil baskısıyla balinalar mal dağıtıyor. TEPE ÇIKIŞ SAT seviyesi aktif.` };
       }
     }
 
     state.candleSeries.setMarkers(markers);
-    
     $('trapsCount').textContent = state.dipCount;
     $('attacksCount').textContent = state.tepeCount;
 
@@ -314,7 +317,6 @@
 
   function updatePanelUI(p, lastCandle) {
     $('sidePrice').textContent = `$${formatPrice(lastCandle.close, p)}`;
-    
     const sb = $('statusBadge'); const st = $('statusText'); const cb = $('commentBlock');
     
     if (state.lastSignal.decision === 'DIP_ALIM') {
@@ -332,15 +334,11 @@
     }
 
     $('robotCommentaryText').textContent = state.lastSignal.msg;
-
-    const body = Math.abs(lastCandle.close - lastCandle.open);
     const lowerWick = Math.min(lastCandle.open, lastCandle.close) - lastCandle.low;
     const upperWick = lastCandle.high - Math.max(lastCandle.open, lastCandle.close);
 
     $('indMomVal').textContent = `${formatPrice(lowerWick, p)}`;
     $('indVolatVal').textContent = `${formatPrice(upperWick, p)}`;
-    
-    // Hacim kutucuk göstergeleri dolduruldu
     $('indVolVal').textContent = `${formatPrice(lastCandle.volume, 0)}`;
     $('indMoneyVal').textContent = lastCandle.close >= lastCandle.open ? "ALICI AĞIRLIKLI" : "SATICI AĞIRLIKLI";
     $('indMoneyVal').className = lastCandle.close >= lastCandle.open ? "up-text" : "down-text";
@@ -470,7 +468,7 @@
     loadCandles();
     setInterval(loadSymbols, 45000);
   });
-})();
+});
 </script>
 
 </body>
