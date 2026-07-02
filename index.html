@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KRİPTO AI ROBOT V9 - SAF HACİM MOTORU</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.2.2/lightweight-charts.standalone.production.js"></script>
   <style>
     :root {
       --bg: #060b13; 
@@ -51,7 +51,7 @@
     .nav-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
     .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
     .nav-right { display: flex; align-items: center; gap: 15px; font-size: 11px; color: var(--muted); }
-    .chart-box { position: relative; width: 100%; height: 100%; min-height: 0; background: var(--bg); }
+    .chart-box { position: relative; width: 100%; height: 100%; min-height: 200px; background: var(--bg); flex: 1; }
     .chart-control-bar { padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
     .timeframes { display: flex; gap: 4px; }
     .tf-btn { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; }
@@ -122,7 +122,7 @@
         <span>🕒 MUM: <b id="lastCandleVal">-</b></span>
       </div>
     </nav>
-    <div style="display:flex; flex-direction:column; height:100%; min-height:0;">
+    <div style="display:flex; flex-direction:column; height:100%; min-height:0; flex:1;">
       <div class="chart-control-bar">
         <div class="live-symbol-title" id="activeSymbolTitle">BTCUSDT <span>15m</span></div>
         <div class="timeframes">
@@ -133,7 +133,7 @@
           <button class="tf-btn" id="tf-4h" onclick="changeInterval('4h')">4h</button>
         </div>
       </div>
-      <div class="chart-box"><div id="chart" style="width:100%; height:100%;"></div></div>
+      <div class="chart-box"><div id="chart" style="position:absolute; top:0; left:0; width:100%; height:100%;"></div></div>
     </div>
     <footer class="bottom-status-bar">
       <div>AI FILTRELEME: <span class="up-text">Aktif (Gecikmesiz İğne Analizi)</span></div>
@@ -213,7 +213,10 @@
   }
 
   function initChart() {
-    state.chart = LightweightCharts.createChart($('chart'), {
+    const chartContainer = $('chart');
+    if (!chartContainer) return;
+
+    state.chart = LightweightCharts.createChart(chartContainer, {
       layout: { background: { type: 'solid', color: '#060b13' }, textColor: '#70859f', fontSize: 11 },
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
       crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
@@ -233,11 +236,18 @@
       scaleMargins: { top: 0.82, bottom: 0 }, visible: false
     });
 
-    new ResizeObserver(() => {
-      if (state.chart && $('chart').clientWidth > 0) {
-        state.chart.resize($('chart').clientWidth, $('chart').clientHeight);
+    // Ekran boyutlandırma fixlendi
+    setTimeout(() => {
+      if(state.chart && chartContainer.clientWidth > 0) {
+        state.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
       }
-    }).observe($('chart'));
+    }, 200);
+
+    new ResizeObserver(() => {
+      if (state.chart && chartContainer.clientWidth > 0) {
+        state.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+      }
+    }).observe(chartContainer);
   }
 
   function analyzeSingleCandle(candles, index, avgVol) {
@@ -329,6 +339,11 @@
 
     $('indMomVal').textContent = `${formatPrice(lowerWick, p)}`;
     $('indVolatVal').textContent = `${formatPrice(upperWick, p)}`;
+    
+    // Hacim kutucuk göstergeleri dolduruldu
+    $('indVolVal').textContent = `${formatPrice(lastCandle.volume, 0)}`;
+    $('indMoneyVal').textContent = lastCandle.close >= lastCandle.open ? "ALICI AĞIRLIKLI" : "SATICI AĞIRLIKLI";
+    $('indMoneyVal').className = lastCandle.close >= lastCandle.open ? "up-text" : "down-text";
   }
 
   async function loadSymbols() {
