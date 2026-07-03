@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KRİPTO AI ROBOT V9 - SAF HACİM MOTORU</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- Grafik Kütüphanesi Üst Kısmına Yükleme Garantisi Verildi -->
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     :root {
@@ -97,7 +96,6 @@
 
 <div class="app">
   
-  <!-- SOL PANEL -->
   <aside class="card left-sidebar">
     <div class="brand-area">
       <div class="brand-title">KRİPTO AI ROBOT V9</div>
@@ -120,7 +118,6 @@
     </div>
   </aside>
 
-  <!-- MERKEZ PANEL -->
   <main class="main-panel">
     <nav class="top-navbar">
       <div class="nav-left"><div class="nav-status"><span class="dot"></span><b>SAF HACİM & FITIL REAKSİYON MOTORU AKTİF</b></div></div>
@@ -151,7 +148,6 @@
     </footer>
   </main>
 
-  <!-- SAĞ PANEL -->
   <aside class="card right-sidebar">
     <div class="panel-header"><h3>🤖 STRATEJİK EMİR KOMUTANI</h3></div>
     <div class="scroll-content">
@@ -188,10 +184,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  if (typeof LightweightCharts === 'undefined') {
-    console.error("TradingView kütüphanesi yüklenemedi! CDN bağlantısını kontrol edin.");
-    return;
-  }
+  if (typeof LightweightCharts === 'undefined') return;
 
   const API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
   
@@ -258,23 +251,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(resizeContainer, 300);
     window.addEventListener('resize', resizeContainer);
-    
     new ResizeObserver(resizeContainer).observe(chartContainer);
   }
 
+  // YENİ DÜZELTİLMİŞ ANALİZ MOTORU: OK KAYMALARI SIFIRLANDI
   function analyzeSingleCandle(candles, index, avgVol) {
-    const last = candles[index];
-    const body = Math.abs(last.close - last.open);
-    const lowerWick = Math.min(last.open, last.close) - last.low;
-    const upperWick = last.high - Math.max(last.open, last.close);
-    const hVolume = last.volume > avgVol * 1.3;
+    const current = candles[index];
+    const body = Math.abs(current.close - current.open);
+    const lowerWick = Math.min(current.open, current.close) - current.low;
+    const upperWick = current.high - Math.max(current.open, current.close);
+    const hVolume = current.volume > avgVol * 1.3;
 
-    if (lowerWick > body * 1.5 && hVolume && last.close > last.open) {
-      return { decision: 'DIP_ALIM', price: last.close, stop: last.close * 0.985, time: last.time };
-    } else if (upperWick > body * 1.5 && hVolume && last.close < last.open) {
-      return { decision: 'TEPE_SATIM', price: last.close, stop: 0, time: last.time };
+    // Alt fitil oranı tepeye/gövdeye göre yüksekse DİP GİRİŞ
+    if (lowerWick > body * 1.5 && hVolume && current.close > current.open) {
+      return { decision: 'DIP_ALIM', price: current.close, stop: current.close * 0.985, time: current.time };
+    } 
+    // Üst fitil baskısı hakimse TEPE ÇIKIŞ
+    else if (upperWick > body * 1.5 && hVolume && current.close < current.open) {
+      return { decision: 'TEPE_SATIM', price: current.close, stop: 0, time: current.time };
     }
-    return { decision: 'IZLEME', price: last.close, stop: 0, time: last.time };
+    return { decision: 'IZLEME', price: current.close, stop: 0, time: current.time };
   }
 
   function runFullAnalysis() {
@@ -294,15 +290,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let i = 20; i < state.candles.length; i++) {
       const res = analyzeSingleCandle(state.candles, i, avgVol);
-      
+      // Eşleşen mumun unix zamanı doğrudan marker objesine kilitleniyor
       if (res.decision === 'DIP_ALIM') {
         state.dipCount++;
         markers.push({ time: res.time, position: 'belowBar', color: '#0ecb81', shape: 'arrowUp', text: 'DİP GİRİŞ AL' });
-        state.lastSignal = { decision: 'DIP_ALIM', price: res.price, stop: res.stop, msg: `🟢 DOĞRULANMIŞ DİP: Alt fitil patlamasıyla kurumsal alıcılar devreye girdi. DİP GİRİŞ AL seviyesi aktif.` };
+        if (i === state.candles.length - 1 || i === state.candles.length - 2) {
+          state.lastSignal = { decision: 'DIP_ALIM', price: res.price, stop: res.stop, msg: `🟢 DOĞRULANMIŞ DİP: Alt fitil patlamasıyla kurumsal alıcılar devreye girdi. DİP GİRİŞ AL seviyesi aktif.` };
+        }
       } else if (res.decision === 'TEPE_SATIM') {
         state.tepeCount++;
         markers.push({ time: res.time, position: 'aboveBar', color: '#f6465d', shape: 'arrowDown', text: 'TEPE ÇIKIŞ SAT' });
-        state.lastSignal = { decision: 'TEPE_SATIM', price: res.price, stop: 0, msg: `🔴 DOĞRULANMIŞ TEPE: Üst fitil baskısıyla balinalar mal dağıtıyor. TEPE ÇIKIŞ SAT seviyesi aktif.` };
+        if (i === state.candles.length - 1 || i === state.candles.length - 2) {
+          state.lastSignal = { decision: 'TEPE_SATIM', price: res.price, stop: 0, msg: `🔴 DOĞRULANMIŞ TEPE: Üst fitil baskısıyla balinalar mal dağıtıyor. TEPE ÇIKIŞ SAT seviyesi aktif.` };
+        }
       }
     }
 
