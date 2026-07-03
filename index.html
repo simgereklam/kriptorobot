@@ -172,12 +172,20 @@
       
       <div class="grid-metrics-container">
         <div class="sub-metric-box">
-          <label>Son Dönüş Sinyali</label>
+          <label>Trend Dönüş Sinyali</label>
           <b id="uiTrendStatus" class="up-text">-</b>
         </div>
         <div class="sub-metric-box">
-          <label>Balina İzi</label>
+          <label>Balina İzi (Büyüklük)</label>
           <b id="uiWhaleIndexVal">-</b>
+        </div>
+        <div class="sub-metric-box">
+          <label>Net Akış (USDT)</label>
+          <b id="uiNetCapitalFlow">-</b>
+        </div>
+        <div class="sub-metric-box">
+          <label>Piyasa Satış Baskısı</label>
+          <b id="uiSellPressure">-</b>
         </div>
       </div>
 
@@ -199,7 +207,6 @@ class SmartMoneyHybridEngine {
   constructor() {
     this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
-    // Varsayılan açılış 1G (Günlük) olsun, düşüş trendlerini iyi görmek için
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
@@ -207,7 +214,13 @@ class SmartMoneyHybridEngine {
     this.init();
   }
 
-  $(id) { return document.getElementById(id); }
+  // Güvenli DOM Kalkanı: HTML'de element silinse bile asla çökmez
+  $(id) { 
+    const el = document.getElementById(id); 
+    if(!el) return { textContent: '', className: '', style: {} }; 
+    return el; 
+  }
+
   formatNumber(v, d=2) { return Number.isFinite(v) ? v.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d}) : '-'; }
   getPrecision(p) { return p < 0.01 ? 6 : p < 1 ? 4 : 2; }
 
@@ -221,6 +234,7 @@ class SmartMoneyHybridEngine {
 
   initChart() {
     const container = this.$('tv_chart_container');
+    if (!container.id) return; // Kalkan devrede
     this.chart = LightweightCharts.createChart(container, {
       layout: { background: { type: 'solid', color: '#02060d' }, textColor: '#6b7f99', fontSize: 11 },
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
@@ -257,7 +271,8 @@ class SmartMoneyHybridEngine {
     this.$('coinScrollList').addEventListener('click', (e) => {
       const row = e.target.closest('.coin-item-row'); if(!row) return;
       this.activeSymbol = row.dataset.symbol;
-      const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
+      const activeBtn = document.querySelector('.tf-selector-btn.active');
+      const activeTfText = activeBtn ? activeBtn.innerText : this.activeInterval;
       this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
       document.querySelectorAll('.coin-item-row').forEach(r=>r.classList.remove('active')); row.classList.add('active');
       this.loadCandles();
@@ -280,7 +295,8 @@ class SmartMoneyHybridEngine {
   }
 
   renderList() {
-    const q = this.$('pariteSearch').value.toUpperCase();
+    const srch = this.$('pariteSearch');
+    const q = (srch.value || '').toUpperCase();
     const f = this.symbolsData.filter(s => {
       const m = !q || s.symbol.includes(q);
       return this.activeTab === 'ALL' ? m : s.symbol.endsWith(this.activeTab) && m;
@@ -304,13 +320,15 @@ class SmartMoneyHybridEngine {
         quoteVolume: +k[7] || 1, trades: +k[8] || 1, takerBuyQuote: +k[10] || 0
       }));
       
-      const prec = this.getPrecision(this.candles[0].close);
-      this.candleSeries.applyOptions({ priceFormat: { type: 'price', precision: prec } });
-      this.candleSeries.setData(this.candles);
-      this.volumeSeries.setData(this.candles.map(c => ({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' })));
-      this.chart.timeScale().fitContent();
-      
-      this.analyzeHybridFlow();
+      if(this.candles.length > 0) {
+        const prec = this.getPrecision(this.candles[0].close);
+        this.candleSeries.applyOptions({ priceFormat: { type: 'price', precision: prec } });
+        this.candleSeries.setData(this.candles);
+        this.volumeSeries.setData(this.candles.map(c => ({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' })));
+        this.chart.timeScale().fitContent();
+        
+        this.analyzeHybridFlow();
+      }
       this.connectWS();
     } catch(e){}
   }
@@ -358,23 +376,18 @@ class SmartMoneyHybridEngine {
       const body = Math.abs(c.close - c.open);
       const prevBody = Math.abs(prev.close - prev.open);
       
-      // Fitil (İğne) Hesaplamaları
       const lowWick = Math.min(c.open, c.close) - c.low;
       const upWick = c.high - Math.max(c.open, c.close);
 
       const currentWhaleSize = c.quoteVolume / (c.trades || 1);
       const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
       
-      // 1. AYAK: BALİNA (Order Flow)
       const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
       const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
 
-      // 2. AYAK: BALYOZ/ŞELALE (Price Action - Yutan Gövde)
       const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
       const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
 
-      // 3. AYAK (YENİ): TREND DÖNÜŞÜ (Düşüş Biterken Yükselişi Bulma - Rejection/Pinbar)
-      // Kural: Alt fitil gövdeden en az 1.5 kat büyük olacak, kapanış yeşil (veya gövdenin üstünde) olacak ve hacim fena olmayacak.
       const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
       const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
 
@@ -410,6 +423,7 @@ class SmartMoneyHybridEngine {
   }
 
   updateLiveOrderFlowUI(avgWhaleSize) {
+    if (this.candles.length === 0) return;
     const last = this.candles[this.candles.length - 1];
     const prec = this.getPrecision(last.close);
     
@@ -420,22 +434,19 @@ class SmartMoneyHybridEngine {
       sb.className = 'decision-badge bullish'; st.textContent = 'GİRİŞ ONAYLI 🟢'; cb.style.borderLeftColor = 'var(--green)';
       this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "up-text";
       this.$('uiSideStop').textContent = `$${this.formatNumber(this.lastSignal.stop, prec)}`; this.$('uiSideStop').className = "down-text";
-      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (DİP)"; this.$('uiTrendStatus').className = "up-text";
     } else if(this.lastSignal.decision === 'TEPE_SATIM') {
       sb.className = 'decision-badge bearish'; st.textContent = 'ACİL ÇIKIŞ 🔴'; cb.style.borderLeftColor = 'var(--red)';
       this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "down-text";
       this.$('uiSideStop').textContent = 'NAKİT ZIRHI'; this.$('uiSideStop').className = "";
-      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
     } else {
       sb.className = 'decision-badge neutral'; st.textContent = 'İZLEME MODU ⏳'; cb.style.borderLeftColor = 'var(--blue)';
       this.$('uiSideTarget').textContent = 'FIRSAT BEKLENİYOR'; this.$('uiSideTarget').className = "";
       this.$('uiSideStop').textContent = '-'; this.$('uiSideStop').className = "";
-      this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
     }
 
     this.$('uiRobotCommentary').textContent = this.lastSignal.msg;
 
-    const takerRatio = last.takerBuyQuote / last.quoteVolume || 0.5;
+    const takerRatio = last.takerBuyQuote / (last.quoteVolume || 1);
     const buyPct = Math.round(takerRatio * 100);
     const sellPct = 100 - buyPct;
 
@@ -444,9 +455,19 @@ class SmartMoneyHybridEngine {
     this.$('uiFlowBuyPct').textContent = `${buyPct}%`;
     this.$('uiFlowSellPct').textContent = `${sellPct}%`;
 
+    const netFlow = last.takerBuyQuote - (last.quoteVolume - last.takerBuyQuote);
+    this.$('uiNetCapitalFlow').textContent = `${netFlow >= 0 ? '+' : ''}$${this.formatNumber(netFlow, 0)}`;
+    this.$('uiNetCapitalFlow').className = netFlow >= 0 ? "up-text" : "down-text";
+
     const whaleMultiplier = (last.quoteVolume / (last.trades || 1)) / (avgWhaleSize || 1);
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
     this.$('uiWhaleIndexVal').className = whaleMultiplier > 1.3 ? "up-text" : "";
+
+    this.$('uiTrendStatus').textContent = last.close > last.open ? "YÜKSELİŞ" : "DÜŞÜŞ";
+    this.$('uiTrendStatus').className = last.close > last.open ? "up-text" : "down-text";
+    
+    this.$('uiSellPressure').textContent = sellPct > 55 ? "KRİTİK" : "NORMAL";
+    this.$('uiSellPressure').className = sellPct > 55 ? "down-text" : "";
   }
 
   async api(p) {
