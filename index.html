@@ -1,490 +1,461 @@
-<!DOCTYPE html>
-<html lang="tr" class="dark">
+<!doctype html>
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoAI - Profesyonel Hibrit Analiz Terminali</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#0B0E11',
-                            card: '#151A21',
-                            border: '#2A303D',
-                            primary: '#2EBD85',
-                            secondary: '#F6465D',
-                            accent: '#F0B90B'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    :root {
+      --bg: #02060d; 
+      --panel: #0b111e; 
+      --panel2: #131b2e; 
+      --line: #1e293b;
+      --txt: #f8fafc; 
+      --muted: #94a3b8; 
+      --green: #00f5d4; 
+      --red: #ff0054;
+      --blue: #00b4d8; 
+      --yellow: #f59e0b;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg); color: var(--txt); overflow: hidden; height: 100vh; width: 100vw; }
+    .app-container { display: grid; grid-template-columns: 290px minmax(0, 1fr) 350px; height: 100vh; width: 100vw; background-color: var(--bg); }
+    .panel-card { background: var(--panel); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+    .left-sidebar { border-right: 1px solid var(--line); }
+    .brand-section { padding: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .brand-logo { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-pro { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); font-size: 9px; padding: 4px 8px; border-radius: 4px; font-weight: 900; }
+    .search-container { padding: 12px; }
+    .input-dark { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: #fff; padding: 11px 14px; border-radius: 6px; outline: none; font-size: 12px; }
+    .filter-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 12px 12px; }
+    .tab-trigger { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 8px; font-size: 11px; cursor: pointer; font-weight: 700; text-align: center; }
+    .tab-trigger.active { border-color: var(--blue); color: #fff; background: rgba(0,180,216,0.05); }
+    .list-header { display: grid; grid-template-columns: 1fr 85px 65px; padding: 8px 16px; font-size: 10px; color: var(--muted); font-weight: 800; border-bottom: 1px solid var(--line); }
+    .coin-scroll-list { overflow-y: auto; flex: 1; padding: 6px; }
+    .coin-item-row { display: grid; grid-template-columns: 1fr 85px 65px; padding: 12px 10px; border-radius: 6px; cursor: pointer; align-items: center; margin-bottom: 4px; border: 1px solid transparent; }
+    .coin-item-row:hover, .coin-item-row.active { background: var(--panel2); border-color: rgba(0,180,216,0.25); }
+    .coin-name-cell { font-size: 12px; font-weight: 700; color: #fff; }
+    .coin-price-cell { font-size: 12px; font-weight: 600; color: #fff; text-align: right; }
+    .coin-change-cell { font-size: 11px; font-weight: 800; text-align: right; }
+    
+    .center-main-panel { display: grid; grid-template-rows: 60px minmax(0, 1fr) 45px; min-width: 0; border-right: 1px solid var(--line); height: 100vh; }
+    .top-navbar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: var(--panel); }
+    .engine-status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--muted); }
+    .status-pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .time-stats { display: flex; align-items: center; gap: 16px; font-size: 11px; color: var(--muted); }
+    .chart-container-wrapper { display: flex; flex-direction: column; height: 100%; min-height: 0; flex: 1; background: var(--bg); }
+    .chart-header-bar { padding: 10px 18px; background: var(--panel); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .active-ticker-info { font-size: 18px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 6px; }
+    .active-ticker-info span { font-size: 11px; background: var(--panel2); color: var(--muted); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); }
+    .timeframe-selector { display: flex; gap: 4px; }
+    .tf-selector-btn { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); padding: 6px 10px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; }
+    .tf-selector-btn.active, .tf-selector-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .chart-box { position: relative; width: 100%; flex: 1; min-height: 0; background: var(--bg); }
+    #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .bottom-info-bar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); background: var(--panel); font-size: 11px; color: var(--muted); }
+    
+    .right-sidebar { border-left: 1px solid var(--line); }
+    .sidebar-title-area { padding: 18px; border-bottom: 1px solid var(--line); }
+    .sidebar-title-area h3 { font-size: 12px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-scrollable-content { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .signal-card-block { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+    .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .block-label { font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .decision-badge { font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 4px; text-transform: uppercase; }
+    .decision-badge.bullish { background: rgba(0,245,212,0.15); color: var(--green); border: 1px solid var(--green); }
+    .decision-badge.bearish { background: rgba(255,0,84,0.15); color: var(--red); border: 1px solid var(--red); }
+    .decision-badge.neutral { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+    .data-metric-line { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; align-items: center; }
+    .data-metric-line span { color: var(--muted); font-weight: 600; }
+    .data-metric-line b { color: #fff; font-weight: 800; font-size: 14px; }
+    
+    .flow-bar-container { width: 100%; background: #1e293b; height: 8px; border-radius: 4px; margin: 8px 0 4px; overflow: hidden; display: flex; }
+    .flow-bar-buy { background: var(--green); height: 100%; transition: width 0.3s; }
+    .flow-bar-sell { background: var(--red); height: 100%; transition: width 0.3s; }
+    
+    .grid-metrics-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sub-metric-box { background: var(--panel2); border: 1px solid var(--line); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; }
+    .sub-metric-box label { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
+    .sub-metric-box b { font-size: 13px; color: #fff; font-weight: 800; }
+    .sub-metric-box span { font-size: 10px; color: var(--muted); }
+    
+    .action-plan-text { font-size: 12px; line-height: 1.6; color: #cbd5e1; font-weight: 500; }
+    .sidebar-action-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); background: var(--panel); }
+    .footer-btn { background: var(--panel2); border: 1px solid var(--line); color: #fff; border-radius: 6px; padding: 12px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+    .up-text { color: var(--green) !important; }
+    .down-text { color: var(--red) !important; }
+  </style>
 </head>
-<body class="bg-brand-dark text-gray-100 font-sans min-h-screen flex flex-col">
+<body>
 
-    <header class="border-b border-brand-border bg-brand-card/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-brand-primary text-brand-dark p-2 rounded-lg font-black text-xl tracking-wider flex items-center justify-center w-10 h-10 shadow-lg shadow-brand-primary/20">
-                    C⚡
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                        CryptoAI Terminal <span class="text-xs bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-full border border-brand-primary/20 font-medium">Pro V3.0</span>
-                    </h1>
-                    <p class="text-xs text-gray-400">Yapay Zeka Destekli Derinlemesine Teknik Analiz Sistemi</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div id="userStatusBox" class="bg-brand-dark border border-brand-border px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
-                    <span class="w-2.5 h-2.5 rounded-full bg-brand-primary animate-pulse"></span>
-                    <span id="userTier" class="font-semibold text-brand-primary">Ücretsiz Üye</span>
-                    <span class="text-gray-500">|</span>
-                    <span id="userLimits" class="text-gray-300">Kalan Hak: 3/3</span>
-                </div>
-                <button id="btnUpgrade" onclick="toggleUpgradeModal()" class="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark font-semibold px-4 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 shadow-md shadow-brand-accent/15">
-                    <i class="fa-solid fa-crown text-xs"></i> Premium'a Geç
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <div class="flex flex-col gap-6">
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-xl flex flex-col h-[580px]">
-                <div class="flex items-center justify-between border-b border-brand-border/50 pb-3 mb-3">
-                    <h3 class="font-bold text-white flex items-center gap-2 text-sm">
-                        <i class="fa-solid fa-wand-magic-sparkles text-brand-accent animate-pulse"></i>
-                        Günün Potansiyel Yükselenleri
-                    </h3>
-                    <button onclick="startCryptoScanner()" class="text-[10px] bg-brand-primary/20 text-brand-primary border border-brand-primary/30 hover:bg-brand-primary/30 px-2 py-1 rounded font-bold transition-all">
-                        <i class="fa-solid fa-arrows-rotate mr-1"></i>Tara
-                    </button>
-                </div>
-
-                <div class="text-[10px] text-gray-400 mb-3 bg-brand-dark p-2 rounded border border-brand-border/30">
-                    <strong>Kriterler:</strong> RSI &lt; 45 (Aşırı satım dipten dönüş) + Son 5 muma kıyasla artan hacim (Para girişi) + Yukarı eğilimli momentum.
-                </div>
-
-                <div id="scannerList" class="flex-grow overflow-y-auto space-y-2 pr-1">
-                    <div class="text-center text-gray-500 py-12">
-                        <div class="inline-block w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mb-2"></div>
-                        <p class="text-xs">Sistem verileri okunuyor...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="lg:col-span-2 flex flex-col gap-6">
-            
-            <div class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-xl">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2">
-                        <span id="activeCoinTitle" class="font-extrabold text-white text-base">BTC / TRY</span>
-                        <span class="text-xs text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-full border border-brand-primary/20 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 bg-brand-primary rounded-full animate-ping"></span> Canlı Veri Akışı
-                        </span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] text-gray-400">Son Fiyat</div>
-                        <div id="livePrice" class="font-extrabold text-brand-primary text-base">Yükleniyor...</div>
-                    </div>
-                </div>
-
-                <div id="chartContainer" class="w-full bg-brand-dark rounded-lg overflow-hidden border border-brand-border/50 relative" style="height: 320px;">
-                    <div id="chartLoading" class="absolute inset-0 bg-brand-dark/95 flex flex-col items-center justify-center gap-3 z-10">
-                        <div class="w-8 h-8 border-3 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-xs text-gray-400">Binance'ten mumlar çekiliyor...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div class="md:col-span-3 bg-brand-card border border-brand-border rounded-xl p-4 shadow-xl flex flex-col">
-                    <div class="flex items-center justify-between border-b border-brand-border/50 pb-2 mb-3">
-                        <h3 class="font-bold text-white text-xs flex items-center gap-1.5">
-                            <i class="fa-solid fa-robot text-brand-accent"></i> Groq AI Derinlemesine Analiz
-                        </h3>
-                        <span id="outputBadge" class="text-[9px] bg-brand-border text-gray-300 px-1.5 py-0.5 rounded-full font-bold">Hazır</span>
-                    </div>
-                    
-                    <div class="flex-grow flex flex-col justify-between">
-                        <div id="aiResponseContainer" class="text-xs text-gray-300 leading-relaxed min-h-[140px]">
-                            <div id="aiPlaceholder" class="text-center text-gray-500 py-6">
-                                <i class="fa-solid fa-brain text-xl mb-1 block"></i>
-                                Analiz butonuna bastığınızda yapay zeka bu coinin tüm indikatörlerini analiz edip size detaylı bir yol haritası sunar.
-                            </div>
-                            <div id="aiTyping" class="hidden text-center py-6">
-                                <div class="inline-block w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mr-2"></div>
-                                Groq verileri analiz ediyor, lütfen bekleyin...
-                            </div>
-                            <div id="aiResult" class="hidden max-h-[180px] overflow-y-auto bg-brand-dark p-3 rounded-lg border border-brand-border/30"></div>
-                        </div>
-
-                        <div class="flex gap-2 mt-3 pt-3 border-t border-brand-border/30">
-                            <button onclick="requestAIAnalysis()" class="flex-grow bg-brand-primary hover:bg-emerald-600 text-white font-bold py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1 shadow-md shadow-brand-primary/10">
-                                <i class="fa-solid fa-robot"></i> Yapay Zeka Analizi İstiyorum
-                            </button>
-                            <button onclick="resetMockLimits()" class="bg-brand-dark hover:bg-brand-border border border-brand-border text-gray-400 px-2.5 py-1.5 rounded-lg text-[10px] transition-all">
-                                Sıfırla
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-2 bg-brand-card border border-brand-border rounded-xl p-4 shadow-xl flex flex-col justify-between">
-                    <div>
-                        <h4 class="font-bold text-xs text-gray-300 mb-3 uppercase tracking-wider">İndikatör Verileri</h4>
-                        <div class="space-y-3">
-                            <div class="bg-brand-dark p-2 rounded border border-brand-border/40 flex justify-between items-center text-xs">
-                                <span class="text-gray-400">RSI (14)</span>
-                                <span id="statRSI" class="font-bold text-white">Veri Bekleniyor</span>
-                            </div>
-                            <div class="bg-brand-dark p-2 rounded border border-brand-border/40 flex justify-between items-center text-xs">
-                                <span class="text-gray-400">EMA (200)</span>
-                                <span id="statEMA" class="font-bold text-white">Veri Bekleniyor</span>
-                            </div>
-                            <div class="bg-brand-dark p-2 rounded border border-brand-border/40 flex justify-between items-center text-xs">
-                                <span class="text-gray-400">Hacim Değişimi</span>
-                                <span id="statVol" class="font-bold text-brand-primary">Hesaplanıyor...</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-brand-dark p-2.5 rounded-lg border border-brand-border/40 mt-3">
-                        <div class="text-[9px] text-gray-400 mb-1">Algoritma Tavsiyesi</div>
-                        <div id="statSignal" class="font-bold text-brand-primary text-xs">Hesaplanıyor...</div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <footer class="border-t border-brand-border bg-brand-card/30 text-center py-4 text-xs text-gray-500 mt-6">
-        <p>© 2026 CryptoAI Terminal. Tüm hakları saklıdır. Yatırım tavsiyesi değildir.</p>
-    </footer>
-
-    <div id="upgradeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="toggleUpgradeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="text-center flex flex-col items-center gap-3 mb-6">
-                <div class="w-12 h-12 bg-brand-accent/10 text-brand-accent rounded-full flex items-center justify-center text-2xl border border-brand-accent/20">
-                    <i class="fa-solid fa-crown"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">CryptoAI Premium'a Yükselt</h3>
-                <p class="text-xs text-gray-400">Günde sadece 3 analizle sınırlı kalmayın. Sınırsız yapay zeka analizine erişin.</p>
-            </div>
-            <button onclick="simulateUpgrade()" class="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-dark font-extrabold py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider">
-                USDT İle Güvenli Öde (Simüle Et)
-            </button>
-        </div>
+<div class="app-container">
+  <aside class="panel-card left-sidebar">
+    <div class="brand-section">
+      <div class="brand-logo">SMART MONEY CORE</div>
+      <span class="badge-pro">DİP AVCISI V13</span>
     </div>
+    <div class="search-container"><input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" /></div>
+    <div class="filter-tabs">
+      <button class="tab-trigger active" id="tab-USDT">USDT</button>
+      <button class="tab-trigger" id="tab-BTC">BTC</button>
+      <button class="tab-trigger" id="tab-ALL">TÜMÜ</button>
+    </div>
+    <div class="list-header"><span>SEMBOLLER</span><span style="text-align: right;">HACİM (24s)</span><span style="text-align: right;">DEĞİŞİM</span></div>
+    <div id="coinScrollList" class="coin-scroll-list"></div>
+  </aside>
 
-    <script>
-        let chart, candleSeries;
-        let activePair = 'BTC'; // Sadece Coin ismini tutacağız (BTC, ETH vb.)
-        let usdtTryPrice = 33.50; // Başlangıç USDT/TRY kuru (Canlı güncellenecektir)
+  <main class="center-main-panel">
+    <nav class="top-navbar">
+      <div class="engine-status">
+        <span class="status-pulse-dot"></span>
+        <span id="engineStatusText">3 AŞAMALI DÖNÜŞ MOTORU AKTİF</span>
+      </div>
+      <div class="time-stats">
+        <span>GÜNCELLEME: <b id="uiLastUpdate">-</b></span>
+        <span>MUM: <b id="uiCandleTime">-</b></span>
+      </div>
+    </nav>
+    <div class="chart-container-wrapper">
+      <div class="chart-header-bar">
+        <div class="active-ticker-info" id="uiActiveSymbol">BTCUSDT <span>1G</span></div>
+        <div class="timeframe-selector">
+          <button class="tf-selector-btn" data-tf="1m">1d</button>
+          <button class="tf-selector-btn" data-tf="5m">5d</button>
+          <button class="tf-selector-btn" data-tf="15m">15d</button>
+          <button class="tf-selector-btn" data-tf="30m">30d</button>
+          <button class="tf-selector-btn" data-tf="1h">1s</button>
+          <button class="tf-selector-btn" data-tf="2h">2s</button>
+          <button class="tf-selector-btn" data-tf="4h">4s</button>
+          <button class="tf-selector-btn active" data-tf="1d">1G</button>
+        </div>
+      </div>
+      <div class="chart-box"><div id="tv_chart_container"></div></div>
+    </div>
+    <footer class="bottom-info-bar">
+      <div>ZIRH: <span class="up-text">Balina + Şelale + Trend Dönüş (Rejection) Aktif</span></div>
+      <div>ALIM (DİP/BALYOZ): <b id="uiDipCount">0</b></div>
+      <div>SATIM (TEPE/ŞELALE): <b id="uiTepeCount">0</b></div>
+    </footer>
+  </main>
+
+  <aside class="panel-card right-sidebar">
+    <div class="sidebar-title-area"><h3>📊 SERMAYE & TREND TERMİNALİ</h3></div>
+    <div class="sidebar-scrollable-content">
+      
+      <div class="signal-card-block">
+        <div class="badge-row">
+          <div class="block-label">Robot Hedef Yönü</div>
+          <div class="decision-badge neutral" id="uiSignalBadge"><span id="uiSignalText">HESAPLANIYOR</span></div>
+        </div>
+        <div class="data-metric-line"><span>ANLIK PİYASA FİYATI</span><b id="uiSidePrice">-</b></div>
+        <div class="data-metric-line"><span>🎯 GİRİŞ / HEDEF</span><b id="uiSideTarget">-</b></div>
+        <div class="data-metric-line"><span>🚨 STOP KORUMASI</span><b id="uiSideStop">-</b></div>
+      </div>
+
+      <div class="signal-card-block">
+        <div style="display: flex; justify-content: space-between; font-size: 11px;" class="block-label">
+          <span>AGRESİF ALICILAR</span>
+          <span>AGRESİF SATICILAR</span>
+        </div>
+        <div class="flow-bar-container">
+          <div id="uiFlowBuy" class="flow-bar-buy" style="width: 50%;"></div>
+          <div id="uiFlowSell" class="flow-bar-sell" style="width: 50%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; margin-top: 4px;">
+          <span id="uiFlowBuyPct" class="up-text">50%</span>
+          <span id="uiFlowSellPct" class="down-text">50%</span>
+        </div>
+      </div>
+      
+      <div class="grid-metrics-container">
+        <div class="sub-metric-box">
+          <label>Son Dönüş Sinyali</label>
+          <b id="uiTrendStatus" class="up-text">-</b>
+        </div>
+        <div class="sub-metric-box">
+          <label>Balina İzi</label>
+          <b id="uiWhaleIndexVal">-</b>
+        </div>
+      </div>
+
+      <div class="signal-card-block" style="border-left: 4px solid var(--blue);" id="uiCommentBlock">
+        <div class="block-label" style="margin-bottom: 6px;">📋 AKILLI HİBRİT EYLEM RAPORU</div>
+        <p class="action-plan-text" id="uiRobotCommentary">Veriler yükleniyor. Düşüşün bittiği trend dönüş noktaları aranıyor...</p>
+      </div>
+    </div>
+    
+    <div class="sidebar-action-footer">
+      <button class="footer-btn" id="btnAlarm">🔔 RADAR ALARMI</button>
+      <button class="footer-btn" id="btnVoice">🔊 SESLİ RAPOR</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+class SmartMoneyHybridEngine {
+  constructor() {
+    this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
+    this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
+    // Varsayılan açılış 1G (Günlük) olsun, düşüş trendlerini iyi görmek için
+    this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
+    this.dipCount = 0; this.tepeCount = 0;
+    this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
+    
+    this.init();
+  }
+
+  $(id) { return document.getElementById(id); }
+  formatNumber(v, d=2) { return Number.isFinite(v) ? v.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d}) : '-'; }
+  getPrecision(p) { return p < 0.01 ? 6 : p < 1 ? 4 : 2; }
+
+  async init() {
+    this.initChart();
+    this.bindEvents();
+    await this.loadTickers();
+    await this.loadCandles();
+    setInterval(() => this.loadTickers(), 45000);
+  }
+
+  initChart() {
+    const container = this.$('tv_chart_container');
+    this.chart = LightweightCharts.createChart(container, {
+      layout: { background: { type: 'solid', color: '#02060d' }, textColor: '#6b7f99', fontSize: 11 },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      rightPriceScale: { borderColor: '#1e293b', autoScale: true },
+      timeScale: { borderColor: '#1e293b', timeVisible: true }
+    });
+    this.candleSeries = this.chart.addCandlestickSeries({ upColor: '#00f5d4', downColor: '#ff0054', borderUpColor: '#00f5d4', borderDownColor: '#ff0054', wickUpColor: '#00f5d4', wickDownColor: '#ff0054' });
+    this.volumeSeries = this.chart.addHistogramSeries({ color: '#00b4d8', priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
+    this.chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 }, visible: false });
+
+    const ro = new ResizeObserver(() => { if(container.clientWidth > 0) this.chart.resize(container.clientWidth, container.clientHeight); });
+    ro.observe(container);
+  }
+
+  bindEvents() {
+    this.$('pariteSearch').addEventListener('input', () => this.renderList());
+    document.querySelectorAll('.filter-tabs .tab-trigger').forEach(t => {
+      t.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-tabs .tab-trigger').forEach(x=>x.classList.remove('active'));
+        e.target.classList.add('active'); this.activeTab = e.target.id.replace('tab-',''); this.renderList();
+      });
+    });
+    
+    document.querySelectorAll('.timeframe-selector .tf-selector-btn').forEach(b => {
+      b.addEventListener('click', (e) => {
+        document.querySelectorAll('.timeframe-selector .tf-selector-btn').forEach(x=>x.classList.remove('active'));
+        e.target.classList.add('active'); 
+        this.activeInterval = e.target.dataset.tf;
+        this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${e.target.innerText}</span>`;
+        this.loadCandles();
+      });
+    });
+
+    this.$('coinScrollList').addEventListener('click', (e) => {
+      const row = e.target.closest('.coin-item-row'); if(!row) return;
+      this.activeSymbol = row.dataset.symbol;
+      const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
+      this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
+      document.querySelectorAll('.coin-item-row').forEach(r=>r.classList.remove('active')); row.classList.add('active');
+      this.loadCandles();
+    });
+    
+    this.$('btnVoice').addEventListener('click', () => {
+      if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const s = new SpeechSynthesisUtterance(this.$('uiRobotCommentary').textContent); s.lang='tr-TR'; window.speechSynthesis.speak(s); }
+    });
+    this.$('btnAlarm').addEventListener('click', () => alert('Dip Avcısı Radarı Aktif!'));
+  }
+
+  async loadTickers() {
+    try {
+      const d = await this.api('/api/v3/ticker/24hr');
+      this.symbolsData = d.filter(s => s.symbol.endsWith('USDT') && !s.symbol.includes('UP') && !s.symbol.includes('DOWN'))
+        .map(s => ({ symbol: s.symbol, price: parseFloat(s.lastPrice), change: parseFloat(s.priceChangePercent), volume: parseFloat(s.quoteVolume) }))
+        .sort((a,b) => b.volume - a.volume);
+      this.renderList();
+    } catch(e){}
+  }
+
+  renderList() {
+    const q = this.$('pariteSearch').value.toUpperCase();
+    const f = this.symbolsData.filter(s => {
+      const m = !q || s.symbol.includes(q);
+      return this.activeTab === 'ALL' ? m : s.symbol.endsWith(this.activeTab) && m;
+    }).slice(0, 30);
+    this.$('coinScrollList').innerHTML = f.map(s => `
+      <div class="coin-item-row ${s.symbol===this.activeSymbol?'active':''}" data-symbol="${s.symbol}">
+        <div class="coin-name-cell">🔶 ${s.symbol}</div>
+        <div class="coin-price-cell">$${this.formatNumber(s.price, this.getPrecision(s.price))}</div>
+        <div class="coin-change-cell ${s.change>=0?'up-text':'down-text'}">${s.change>=0?'+':''}${s.change.toFixed(2)}%</div>
+      </div>
+    `).join('');
+  }
+
+  async loadCandles() {
+    try {
+      this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ DİP AVCISI: Düşüşün bittiğini gösteren trend dönüşü (Reversal) aranıyor...' };
+      const d = await this.api(`/api/v3/klines?symbol=${this.activeSymbol}&interval=${this.activeInterval}&limit=120`);
+      
+      this.candles = d.map(k => ({ 
+        time: Math.floor(k[0]/1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5],
+        quoteVolume: +k[7] || 1, trades: +k[8] || 1, takerBuyQuote: +k[10] || 0
+      }));
+      
+      const prec = this.getPrecision(this.candles[0].close);
+      this.candleSeries.applyOptions({ priceFormat: { type: 'price', precision: prec } });
+      this.candleSeries.setData(this.candles);
+      this.volumeSeries.setData(this.candles.map(c => ({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' })));
+      this.chart.timeScale().fitContent();
+      
+      this.analyzeHybridFlow();
+      this.connectWS();
+    } catch(e){}
+  }
+
+  connectWS() {
+    if(this.ws) this.ws.close();
+    this.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${this.activeSymbol.toLowerCase()}@kline_${this.activeInterval}`);
+    this.ws.onmessage = (e) => {
+      const m = JSON.parse(e.data); if(!m.k) return; const k = m.k;
+      const c = { 
+        time: Math.floor(k.t/1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v,
+        quoteVolume: +k.q || 1, trades: +k.n || 1, takerBuyQuote: +k.Q || 0
+      };
+      const last = this.candles[this.candles.length - 1];
+      if(last && last.time === c.time) this.candles[this.candles.length - 1] = c; else this.candles.push(c);
+      
+      this.candleSeries.update(c);
+      this.volumeSeries.update({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' });
+      
+      this.$('uiLastUpdate').textContent = new Date().toLocaleTimeString('tr-TR');
+      this.$('uiCandleTime').textContent = new Date(c.time*1000).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+      this.analyzeHybridFlow();
+    };
+  }
+
+  analyzeHybridFlow() {
+    if(this.candles.length < 21) return;
+    
+    let totalWhaleSize = 0;
+    let totalMarketVol = 0;
+    for(let i = this.candles.length - 21; i < this.candles.length - 1; i++) {
+      totalWhaleSize += (this.candles[i].quoteVolume / (this.candles[i].trades || 1));
+      totalMarketVol += this.candles[i].volume;
+    }
+    const avgWhaleSize = totalWhaleSize / 20;
+    const avgMarketVol = totalMarketVol / 20;
+
+    let markers = []; this.dipCount = 0; this.tepeCount = 0;
+    let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ PİYASA İZLENİYOR: Şelale düşüşleri veya trend dönüşleri bekleniyor.' };
+
+    for(let i = 20; i < this.candles.length; i++) {
+      const c = this.candles[i];
+      const prev = this.candles[i-1];
+      
+      const body = Math.abs(c.close - c.open);
+      const prevBody = Math.abs(prev.close - prev.open);
+      
+      // Fitil (İğne) Hesaplamaları
+      const lowWick = Math.min(c.open, c.close) - c.low;
+      const upWick = c.high - Math.max(c.open, c.close);
+
+      const currentWhaleSize = c.quoteVolume / (c.trades || 1);
+      const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
+      
+      // 1. AYAK: BALİNA (Order Flow)
+      const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
+      const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
+
+      // 2. AYAK: BALYOZ/ŞELALE (Price Action - Yutan Gövde)
+      const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
+      const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
+
+      // 3. AYAK (YENİ): TREND DÖNÜŞÜ (Düşüş Biterken Yükselişi Bulma - Rejection/Pinbar)
+      // Kural: Alt fitil gövdeden en az 1.5 kat büyük olacak, kapanış yeşil (veya gövdenin üstünde) olacak ve hacim fena olmayacak.
+      const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
+      const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
+
+      if(isSmartBuy || isBalyozBuy || isDipDonus) {
+        this.dipCount++;
+        let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
+        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: label });
         
-        let userState = { tier: 'Ücretsiz Üye', limits: 3 };
-
-        function loadUserState() {
-            const savedState = localStorage.getItem('crypto_ai_user');
-            if (savedState) userState = JSON.parse(savedState);
-            else saveUserState();
-            updateUserUI();
+        if(i >= this.candles.length - 2) {
+          temp = { decision: 'DIP_ALIM', price: c.close, stop: c.low * 0.99, msg: `🟢 YÜKSELİŞ BAŞLIYOR: ${isDipDonus ? 'Satıcılar yoruldu, DİP DÖNÜŞ iğnesi bırakıldı.' : 'Güçlü alım ivmesi yakalandı.'}` };
         }
-
-        function saveUserState() {
-            localStorage.setItem('crypto_ai_user', JSON.stringify(userState));
+      } 
+      else if(isSmartSell || isSelaleSell || isTepeDonus) {
+        this.tepeCount++;
+        let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
+        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: label });
+        
+        if(i >= this.candles.length - 2) {
+          temp = { decision: 'TEPE_SATIM', price: c.close, stop: 0, msg: `🔴 DÜŞÜŞ TEHLİKESİ: ${isTepeDonus ? 'Alıcılar tükendi, TEPEDE RED iğnesi yedik.' : 'Satış baskısı çok yüksek, nakite geçin.'}` };
         }
+      }
+    }
 
-        function updateUserUI() {
-            document.getElementById('userTier').textContent = userState.tier;
-            if (userState.tier === 'Premium Üye') {
-                document.getElementById('userTier').className = 'font-semibold text-brand-accent';
-                document.getElementById('userLimits').textContent = 'Limit: Sınırsız';
-                document.getElementById('btnUpgrade').style.display = 'none';
-            } else {
-                document.getElementById('userTier').className = 'font-semibold text-brand-primary';
-                document.getElementById('userLimits').textContent = `Kalan Hak: ${userState.limits}/3`;
-                document.getElementById('btnUpgrade').style.display = 'flex';
-            }
-        }
+    this.candleSeries.setMarkers(markers);
+    this.$('uiDipCount').textContent = this.dipCount; 
+    this.$('uiTepeCount').textContent = this.tepeCount;
+    
+    if(temp.decision !== 'IZLEME' || this.lastSignal.decision === 'IZLEME') {
+      this.lastSignal = temp;
+    }
+    
+    this.updateLiveOrderFlowUI(avgWhaleSize);
+  }
 
-        // Koyu Temalı Lightweight Chart Kurulumu (Tamamen Bizim Alanımız, Reklamsız, Yönlendirmesiz)
-        function initChart() {
-            const container = document.getElementById('chartContainer');
-            chart = LightweightCharts.createChart(container, {
-                width: container.offsetWidth,
-                height: 320,
-                layout: { background: { type: 'solid', color: '#151A21' }, textColor: '#A0AEC0' },
-                grid: { vertLines: { color: '#2A303D' }, horzLines: { color: '#2A303D' } },
-                timeScale: { timeVisible: true }
-            });
-            candleSeries = chart.addCandlestickSeries({
-                upColor: '#2ebd85', downColor: '#f6465d', borderDownColor: '#f6465d', borderUpColor: '#2ebd85', wickDownColor: '#f6465d', wickUpColor: '#2ebd85'
-            });
-            window.addEventListener('resize', () => chart.resize(container.offsetWidth, 320));
-        }
+  updateLiveOrderFlowUI(avgWhaleSize) {
+    const last = this.candles[this.candles.length - 1];
+    const prec = this.getPrecision(last.close);
+    
+    this.$('uiSidePrice').textContent = `$${this.formatNumber(last.close, prec)}`;
+    const sb = this.$('uiSignalBadge'); const st = this.$('uiSignalText'); const cb = this.$('uiCommentBlock');
 
-        // Canlı Dolar/TL kurunu çekiyoruz ki Binance Global fiyatlarını TL yapalım
-        async function fetchUsdtTry() {
-            try {
-                // Binance Global'deki USDTTRY kurunu doğrudan engelsiz çekiyoruz
-                const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY');
-                const data = await response.json();
-                usdtTryPrice = parseFloat(data.price);
-            } catch (e) {
-                console.error("USDT/TRY kuru alınamadı, sabit kur kullanılıyor.");
-            }
-        }
+    if(this.lastSignal.decision === 'DIP_ALIM') {
+      sb.className = 'decision-badge bullish'; st.textContent = 'GİRİŞ ONAYLI 🟢'; cb.style.borderLeftColor = 'var(--green)';
+      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "up-text";
+      this.$('uiSideStop').textContent = `$${this.formatNumber(this.lastSignal.stop, prec)}`; this.$('uiSideStop').className = "down-text";
+      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (DİP)"; this.$('uiTrendStatus').className = "up-text";
+    } else if(this.lastSignal.decision === 'TEPE_SATIM') {
+      sb.className = 'decision-badge bearish'; st.textContent = 'ACİL ÇIKIŞ 🔴'; cb.style.borderLeftColor = 'var(--red)';
+      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "down-text";
+      this.$('uiSideStop').textContent = 'NAKİT ZIRHI'; this.$('uiSideStop').className = "";
+      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
+    } else {
+      sb.className = 'decision-badge neutral'; st.textContent = 'İZLEME MODU ⏳'; cb.style.borderLeftColor = 'var(--blue)';
+      this.$('uiSideTarget').textContent = 'FIRSAT BEKLENİYOR'; this.$('uiSideTarget').className = "";
+      this.$('uiSideStop').textContent = '-'; this.$('uiSideStop').className = "";
+      this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
+    }
 
-        // CORS Engelsiz Grafik Verisi Yükleyici (Binance Global API)
-        async function fetchChartData(coinSymbol) {
-            document.getElementById('chartLoading').classList.remove('hidden');
-            document.getElementById('activeCoinTitle').textContent = `${coinSymbol} / TRY`;
-            try {
-                await fetchUsdtTry(); // Kuru tazele
-                const pair = `${coinSymbol}USDT`;
-                const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=4h&limit=100`);
-                const data = await response.json();
-                
-                const formattedData = data.map(d => ({
-                    time: d[0] / 1000,
-                    open: parseFloat(d[1]) * usdtTryPrice,
-                    high: parseFloat(d[2]) * usdtTryPrice,
-                    low: parseFloat(d[3]) * usdtTryPrice,
-                    close: parseFloat(d[4]) * usdtTryPrice
-                }));
+    this.$('uiRobotCommentary').textContent = this.lastSignal.msg;
 
-                candleSeries.setData(formattedData);
-                document.getElementById('chartLoading').classList.add('hidden');
-                calculateTechnicalMetrics(formattedData);
-            } catch (error) {
-                console.error("Grafik yükleme hatası:", error);
-                document.getElementById('chartLoading').innerHTML = "<p class='text-brand-secondary text-xs p-4 text-center'>Sunucu yoğun. Yeniden deneniyor...</p>";
-            }
-        }
+    const takerRatio = last.takerBuyQuote / last.quoteVolume || 0.5;
+    const buyPct = Math.round(takerRatio * 100);
+    const sellPct = 100 - buyPct;
 
-        // Canlı TL Fiyat Güncelleyici
-        async function updateLivePrice() {
-            try {
-                const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${activePair}USDT`);
-                const data = await response.json();
-                const priceTry = parseFloat(data.price) * usdtTryPrice;
-                document.getElementById('livePrice').textContent = `${priceTry.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL`;
-            } catch (e) {
-                console.error("Fiyat çekme hatası.");
-            }
-        }
+    this.$('uiFlowBuy').style.width = `${buyPct}%`;
+    this.$('uiFlowSell').style.width = `${sellPct}%`;
+    this.$('uiFlowBuyPct').textContent = `${buyPct}%`;
+    this.$('uiFlowSellPct').textContent = `${sellPct}%`;
 
-        // Gelişmiş Matematiksel İndikatör Hesaplamaları
-        let currentRSI = 50;
-        let currentEMA = 0;
-        let currentVolumeSpike = 0;
+    const whaleMultiplier = (last.quoteVolume / (last.trades || 1)) / (avgWhaleSize || 1);
+    this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
+    this.$('uiWhaleIndexVal').className = whaleMultiplier > 1.3 ? "up-text" : "";
+  }
 
-        function calculateTechnicalMetrics(candles) {
-            if (candles.length < 15) return;
-            let gains = 0, losses = 0;
-            for (let i = candles.length - 14; i < candles.length; i++) {
-                let diff = candles[i].close - candles[i-1].close;
-                if (diff >= 0) gains += diff; else losses -= diff;
-            }
-            currentRSI = Math.round(100 - (100 / (1 + (gains / (losses || 1)))));
-            currentEMA = Math.round(candles.slice(-50).reduce((acc, curr) => acc + curr.close, 0) / 50);
+  async api(p) {
+    for(const b of this.API_BASES) { try { const r = await fetch(b+p); if(r.ok) return await r.json(); } catch(e){} }
+    throw new Error();
+  }
+}
 
-            // Son 5 mumdaki hacim artış oranı
-            let lastVol = candles[candles.length - 1].close; // basitlik adına fiyat farkı/momentumu üzerinden oran
-            currentVolumeSpike = Math.round(Math.random() * 45) + 10; // Doğal para giriş göstergesi
-
-            document.getElementById('statRSI').textContent = currentRSI;
-            document.getElementById('statEMA').textContent = `${currentEMA.toLocaleString('tr-TR')} TL`;
-            document.getElementById('statVol').textContent = `+%${currentVolumeSpike}`;
-
-            const signalBox = document.getElementById('statSignal');
-            if (currentRSI < 45) {
-                signalBox.textContent = '🟢 GÜÇLÜ AL / DİP DÖNÜŞÜ';
-                signalBox.className = 'font-bold text-brand-primary text-xs mt-1';
-            } else if (currentRSI > 70) {
-                signalBox.textContent = '🔴 AŞIRI ŞİŞME / SATIŞ ZAMANI';
-                signalBox.className = 'font-bold text-brand-secondary text-xs mt-1';
-            } else {
-                signalBox.textContent = '🟡 NÖTR / BEKLE VE GÖR';
-                signalBox.className = 'font-bold text-amber-500 text-xs mt-1';
-            }
-        }
-
-        // SIFIR HATA İLE ÇALIŞAN GÜNLÜK COIN TARAMA SİSTEMİ
-        async function startCryptoScanner() {
-            const listEl = document.getElementById('scannerList');
-            listEl.innerHTML = `
-                <div class="text-center py-10">
-                    <div class="inline-block w-5 h-5 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <p class="text-[10px] text-gray-400">Kripto paralar taranıyor...</p>
-                </div>`;
-
-            const coinsToScan = ['BTC', 'ETH', 'SOL', 'AVAX', 'LINK', 'XRP', 'ADA', 'DOT', 'SHIB'];
-            let foundCoins = [];
-
-            for (let coin of coinsToScan) {
-                try {
-                    const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin}USDT&interval=4h&limit=30`);
-                    const data = await response.json();
-                    const candles = data.map(d => ({ close: parseFloat(d[4]), open: parseFloat(d[1]) }));
-                    
-                    // RSI hesaplaması
-                    let gains = 0, losses = 0;
-                    for (let i = candles.length - 14; i < candles.length; i++) {
-                        let diff = candles[i].close - candles[i-1].close;
-                        if (diff >= 0) gains += diff; else losses -= diff;
-                    }
-                    let rsi = Math.round(100 - (100 / (1 + (gains / (losses || 1)))));
-                    let lastPriceTry = candles[candles.length - 1].close * usdtTryPrice;
-
-                    foundCoins.push({
-                        symbol: coin,
-                        price: lastPriceTry,
-                        rsi: rsi,
-                        volIncrease: Math.round(Math.random() * 35) + 15 // Hacim artış simülasyonu
-                    });
-                } catch (e) {
-                    console.error(`${coin} tarama hatası:`, e);
-                }
-            }
-
-            // Arayüzü canlandır (Tamamen bizim tıklanabilir coinlerimiz!)
-            listEl.innerHTML = '';
-            foundCoins.sort((a, b) => a.rsi - b.rsi); // En düşük RSI olanlar en yukarıda (DİP AVCISI)
-
-            foundCoins.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "bg-brand-dark hover:border-brand-primary border border-brand-border/40 p-3 rounded-lg flex items-center justify-between transition-all cursor-pointer";
-                div.onclick = () => {
-                    activePair = item.symbol;
-                    fetchChartData(activePair);
-                    updateLivePrice();
-                };
-                div.innerHTML = `
-                    <div>
-                        <span class="font-bold text-white text-xs block">${item.symbol} / TRY</span>
-                        <span class="text-[9px] text-brand-primary flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> Para Girişi: +%${item.volIncrease}</span>
-                    </div>
-                    <div class="text-right">
-                        <span class="font-bold text-gray-200 text-xs block">${item.price.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL</span>
-                        <span class="text-[9px] text-brand-accent">RSI (DİP): ${item.rsi}</span>
-                    </div>
-                `;
-                listEl.appendChild(div);
-            });
-        }
-
-        function toggleUpgradeModal() {
-            document.getElementById('upgradeModal').classList.toggle('hidden');
-        }
-
-        function simulateUpgrade() {
-            userState.tier = 'Premium Üye';
-            saveUserState();
-            updateUserUI();
-            toggleUpgradeModal();
-            alert("Ödeme başarılı! CryptoAI Premium dünyasına hoş geldiniz.");
-        }
-
-        function resetMockLimits() {
-            userState.tier = 'Ücretsiz Üye';
-            userState.limits = 3;
-            saveUserState();
-            updateUserUI();
-            alert("Analiz haklarınız sıfırlandı!");
-        }
-
-        // Derinlemesine Strateji Üreten Yapay Zeka Motoru
-        async function requestAIAnalysis() {
-            if (userState.tier !== 'Premium Üye' && userState.limits <= 0) {
-                alert("Ücretsiz kullanım limitiniz doldu! Lütfen Premium'a geçin veya test butonundan sıfırlayın.");
-                toggleUpgradeModal();
-                return;
-            }
-
-            if (userState.tier !== 'Premium Üye') {
-                userState.limits -= 1;
-                saveUserState();
-                updateUserUI();
-            }
-
-            const placeholder = document.getElementById('aiPlaceholder');
-            const typing = document.getElementById('aiTyping');
-            const resultBox = document.getElementById('aiResult');
-            const badge = document.getElementById('outputBadge');
-
-            placeholder.classList.add('hidden');
-            resultBox.classList.add('hidden');
-            typing.classList.remove('hidden');
-            badge.textContent = 'Analiz Yapılıyor...';
-
-            // Mevcut verileri anlık al
-            const rsiVal = currentRSI;
-            const emaVal = currentEMA;
-            const livePriceText = document.getElementById('livePrice').textContent;
-
-            // Yapay zekaya özel detaylı analiz
-            setTimeout(() => {
-                typing.classList.add('hidden');
-                resultBox.classList.remove('hidden');
-                badge.textContent = 'Analiz Edildi';
-
-                let aiCommentary = "";
-                if (rsiVal < 45) {
-                    aiCommentary = `Fiyatın aşırı satım aralığında (${rsiVal} RSI) olması, düşüş trendinin hız kestiğini ve alıcıların güç kazanmaya başladığını gösteriyor. Günlük hacim ortalaması son saatlerde %${currentVolumeSpike} artış gösterdi. Bu durum, piyasaya kurumsal para girişi yapıldığını destekleyen en büyük kanıtlardan biridir. EMA200 çizgisi olan ${emaVal.toLocaleString('tr-TR')} TL'nin üzerinde kalınması halinde yükseliş agresifleşebilir.`;
-                } else if (rsiVal > 70) {
-                    aiCommentary = `RSI göstergesi ${rsiVal} seviyesiyle aşırı şişme bölgesindedir. Son periyotlarda gelen alımlar tamamen spekülatiftir. Güçlü bir düzeltme dalgasının gelme ihtimali %85 seviyesindedir. Mevcut kârları korumak, stop limitlerini yukarı çekmek veya kısmi kâr realize etmek en güvenli stratejidir.`;
-                } else {
-                    aiCommentary = `Fiyat nötr bölgede seyrediyor. Ne alıcılar ne de satıcılar tam olarak kontrolü ele geçirebilmiş değil. İşlem hacmindeki artış momentumu şu an için zayıf görünüyor. Yeni bir pozisyon açmak yerine, destek veya direnç kırılımlarını izlemek en mantıklısıdır.`;
-                }
-
-                resultBox.innerHTML = `
-                    <div class="space-y-3 font-sans">
-                        <div class="flex justify-between items-center border-b border-brand-border/40 pb-1.5">
-                            <span class="text-brand-accent font-extrabold text-[12px]"><i class="fa-solid fa-sparkles"></i> YAPAY ZEKA STRATEJİ PANELİ</span>
-                            <span class="text-[9px] text-gray-400">Hedef: ${activePair} / TRY</span>
-                        </div>
-                        <div class="space-y-1">
-                            <p>💰 <strong>Canlı Fiyat:</strong> <span class="text-brand-primary font-bold">${livePriceText}</span></p>
-                            <p>📊 <strong>Teknik Özet:</strong> RSI: ${rsiVal} (${rsiVal < 45 ? 'Dip Bölgesi' : 'Nötr'}) | Hacim: +%${currentVolumeSpike}</p>
-                        </div>
-                        <p class="text-gray-300 leading-relaxed text-[11px] bg-brand-dark/50 p-2.5 rounded-lg border border-brand-border/30">
-                            <strong>AI Strateji Önerisi:</strong> ${aiCommentary}
-                        </p>
-                        <div class="text-[9px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2 rounded">
-                            ⚠️ <strong>Yatırımcı Uyarısı:</strong> Robot sinyalleri algoritmiktir. Kendi risk analizinizi mutlaka yapınız (DYOR).
-                        </div>
-                    </div>
-                `;
-            }, 1800);
-        }
-
-        window.onload = () => {
-            loadUserState();
-            initChart();
-            fetchUsdtTry().then(() => {
-                fetchChartData(activePair);
-                updateLivePrice();
-                startCryptoScanner();
-            });
-            setInterval(updateLivePrice, 5000); // 5 saniyede bir fiyat güncelle
-        };
-    </script>
+window.AICore = new SmartMoneyHybridEngine();
+</script>
 </body>
 </html>
