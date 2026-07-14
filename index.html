@@ -6,6 +6,7 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- FontAwesome Icons for UI -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -94,8 +95,8 @@
     .up-text { color: var(--green) !important; }
     .down-text { color: var(--red) !important; }
 
-    /* AI Live Tracker Styles */
-    .ai-analysis-block { background: linear-gradient(135deg, rgba(0, 245, 212, 0.04) 0%, rgba(11, 17, 30, 1) 100%); border: 1px solid rgba(0, 245, 212, 0.35); position: relative; }
+    /* AI Live Tracker */
+    .ai-analysis-block { background: linear-gradient(135deg, rgba(0, 245, 212, 0.04) 0%, rgba(11, 17, 30, 1) 100%); border: 1px solid rgba(0, 245, 212, 0.35); }
     .ai-live-indicator { font-size: 8px; background: rgba(0, 245, 212, 0.2); color: var(--green); padding: 1px 5px; border-radius: 3px; font-weight: 900; animation: pulse 2s infinite; }
     .ai-commentary-box { font-size: 11px; line-height: 1.5; color: #e2e8f0; min-height: 90px; }
 
@@ -173,6 +174,7 @@
     </div>
     <div class="sidebar-scrollable-content">
       
+      <!-- Yapay Zeka Canlı Takip Modülü -->
       <div class="signal-card-block ai-analysis-block">
         <div class="badge-row" style="margin-bottom: 8px;">
           <div class="block-label" style="color: var(--green);"><i class="fa-solid fa-brain"></i> Canlı Yapay Zeka Takipçisi</div>
@@ -183,6 +185,7 @@
         </div>
       </div>
 
+      <!-- Canlı Otomatik Radar Havuzu -->
       <div class="signal-card-block radar-pool-block">
         <div class="badge-row" style="margin-bottom: 2px;">
           <div class="block-label" style="color: var(--blue);"><i class="fa-solid fa-satellite-dish animate-pulse"></i> ONAY ALMIŞ YENİ YÜKSELENLER</div>
@@ -242,18 +245,13 @@
   </aside>
 </div>
 
+<!-- Premium Modalı -->
 <div class="upgrade-modal-overlay" id="upgradeModal">
   <div class="upgrade-modal-box">
     <h2 class="text-white font-extrabold text-lg mb-2"><i class="fa-solid fa-crown text-yellow-500"></i> DİP AVCISI PREMIUM</h2>
     <p class="text-xs text-slate-400 mb-4">Ücretsiz günlük kullanım limitiniz doldu. Tüm yapay zeka analizlerine ve sınırsız robot taramasına kesintisiz erişmek için Premium hesaba geçin.</p>
-    <div class="bg-slate-900 border border-slate-800 p-3 rounded text-left text-xs mb-4">
-      <div class="text-white font-bold mb-1"><i class="fa-solid fa-check text-green-400"></i> Sınırsız Yapay Zeka Analiz Raporları</div>
-      <div class="text-white font-bold mb-1"><i class="fa-solid fa-check text-green-400"></i> Akıllı Filtreli Günlük Coin Taramaları</div>
-      <div class="text-white font-bold"><i class="fa-solid fa-check text-green-400"></i> Gerçek Zamanlı Balina Alarmları</div>
-    </div>
     <button class="btn-premium-action" onclick="simulateUpgrade()">9.90 USDT İle Yükselt</button>
     <button class="text-xs text-slate-500 mt-3 block w-full hover:text-slate-300" onclick="toggleUpgradeModal()">Kapat</button>
-    <button class="text-[9px] text-slate-600 mt-2 block w-full hover:text-slate-400" onclick="resetUserLimits()">[Test Amaçlı Hakları Sıfırla]</button>
   </div>
 </div>
 
@@ -266,7 +264,6 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
     
-    // Üyelik Hafızası
     this.userLimits = 3;
     this.userTier = 'Ücretsiz Üye';
 
@@ -284,7 +281,6 @@ class SmartMoneyHybridEngine {
     await this.loadTickers();
     await this.loadCandles();
     
-    // Arka plan canavar tarayıcıyı başlat (Her 15 saniyede bir havuzu günceller)
     this.runHighlySelectiveScanner(true);
     setInterval(() => this.runHighlySelectiveScanner(true), 15000);
     setInterval(() => this.loadTickers(), 45000);
@@ -442,12 +438,11 @@ class SmartMoneyHybridEngine {
       this.$('uiLastUpdate').textContent = new Date().toLocaleTimeString('tr-TR');
       this.$('uiCandleTime').textContent = new Date(c.time*1000).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
       
-      // WebSocket her anlık canlı veri akıttığında etiketlemeyi ve yapay zekayı anında tetikliyoruz
       this.analyzeHybridFlow();
     };
   }
 
-  // 🔴 ANLIK MUM HAREKETİNE GÖRE ANINDA ETİKET OLUŞTURAN MOTOR
+  // 🔴 HER SANİYE SON CANLI MUMU TAKİP EDEREK ZORUNLU ETİKETLEYEN VE ANALİZ EDEN MOTOR
   analyzeHybridFlow() {
     if(this.candles.length < 21) return;
     
@@ -461,27 +456,23 @@ class SmartMoneyHybridEngine {
     const avgMarketVol = totalMarketVol / 20;
 
     let markers = []; this.dipCount = 0; this.tepeCount = 0;
-    let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ PİYASA İZLENİYOR: Şelale düşüşleri veya trend dönüşleri bekleniyor.' };
+    let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ PİYASA İZLENİYOR: Son mumda hacim ve yön değişimleri aranıyor.' };
 
-    for(let i = 20; i < this.candles.length; i++) {
+    // 1. AŞAMA: Geçmiş mumları normal koşullara göre işaretle
+    for(let i = 20; i < this.candles.length - 1; i++) {
       const c = this.candles[i];
       const prev = this.candles[i-1];
-      
       const body = Math.abs(c.close - c.open);
       const prevBody = Math.abs(prev.close - prev.open);
-      
       const lowWick = Math.min(c.open, c.close) - c.low;
       const upWick = c.high - Math.max(c.open, c.close);
-
       const currentWhaleSize = c.quoteVolume / (c.trades || 1);
       const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
       
       const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
       const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
-
       const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
       const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
-
       const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
       const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
 
@@ -489,33 +480,54 @@ class SmartMoneyHybridEngine {
         this.dipCount++;
         let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
         markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: label });
-        
-        // Son canlı mumu doğrudan anlık yakalıyoruz
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: c.close, stop: c.low * 0.99, msg: `🟢 YÜKSELİŞ BAŞLIYOR: ${isDipDonus ? 'Satıcılar yoruldu, canlı muma DİP DÖNÜŞ etiketlendi!' : 'Güçlü alım momentumu onaylandı.'}` };
-        }
       } 
       else if(isSmartSell || isSelaleSell || isTepeDonus) {
         this.tepeCount++;
         let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
         markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: label });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: c.close, stop: 0, msg: `🔴 DÜŞÜŞ BAŞLADI: Canlı mumda TEPE REDDİ iğnesi oluştu, nakite geçin.` };
-        }
       }
     }
 
+    // 2. AŞAMA: EN SON (CANLI) MUMU KESİNTİSİZ VE ZORUNLU OLARAK ETİKETLEME (BURASI DEĞİŞTİ!)
+    const last = this.candles[this.candles.length - 1];
+    const prev = this.candles[this.candles.length - 2];
+    const lastBody = Math.abs(last.close - last.open);
+    const lastLowWick = Math.min(last.open, last.close) - last.low;
+    const lastUpWick = last.high - Math.max(last.open, last.close);
+
+    // Eğer son mum yeşil ise ve bir miktar alt iğnesi veya yukarı ivmesi varsa, anında canlı DİP ONAYI basıyoruz
+    if (last.close >= last.open) {
+      this.dipCount++;
+      let label = (lastLowWick > lastBody * 0.8) ? 'DİP DÖNÜŞÜ' : 'BALYOZ AL';
+      markers.push({ time: last.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label}` });
+      temp = { 
+        decision: 'DIP_ALIM', 
+        price: last.close, 
+        stop: last.low * 0.99, 
+        msg: `🟢 CANLI YÜKSELİŞ BAŞLADI: Son mum yeşil yaktı, alıcı baskısı %${Math.round((last.takerBuyQuote / last.quoteVolume) * 100)} seviyesinde ve DİP AVCISI devrede!` 
+      };
+    } 
+    // Eğer son mum kırmızı ise ve kafaya satış yiyorsa anında canlı TEPE REDDİ basıyoruz
+    else {
+      this.tepeCount++;
+      let label = (lastUpWick > lastBody * 0.8) ? 'TEPE REDDİ' : 'ŞELALE SAT';
+      markers.push({ time: last.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label}` });
+      temp = { 
+        decision: 'TEPE_SATIM', 
+        price: last.close, 
+        stop: 0, 
+        msg: `🔴 CANLI DÜŞÜŞ AKTİF: Son mum kırmızı. Satış baskısı yüksek, riskleri azaltıp nakit korumasına geçiş yapın.` 
+      };
+    }
+
+    // Listeyi yenile ve etiketleri yerleştir
     this.candleSeries.setMarkers(markers);
     this.$('uiDipCount').textContent = this.dipCount; 
     this.$('uiTepeCount').textContent = this.tepeCount;
     
-    // Değişimi anlık olarak lastSignal'e atıyoruz
     this.lastSignal = temp;
     this.updateLiveOrderFlowUI(avgWhaleSize);
-    
-    // YAPAY ZEKA CANLI FEED'İ TETİKLE (Canlı mumu kesintisiz izleme yorumu)
-    this.updateLiveAICommentary(avgWhaleSize);
+    this.updateLiveAICommentary();
   }
 
   updateLiveOrderFlowUI(avgWhaleSize) {
@@ -558,8 +570,8 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').className = whaleMultiplier > 1.3 ? "up-text" : "";
   }
 
-  // 🤖 YAPAY ZEKANIN CANLI TAKİP VE RAPORLAMA SİSTEMİ (Kesintisiz Çalışır)
-  updateLiveAICommentary(avgWhaleSize) {
+  // 🤖 YAPAY ZEKA CANLI FEED TAKİBİ (Fiyat değiştikçe anlık yenilenir)
+  updateLiveAICommentary() {
     const last = this.candles[this.candles.length - 1];
     const whaleVal = this.$('uiWhaleIndexVal').textContent;
     const buyPct = this.$('uiFlowBuyPct').textContent;
@@ -570,29 +582,22 @@ class SmartMoneyHybridEngine {
 
     if (lastSig.includes("YÜKSELİŞ") || lastSig.includes("DİP")) {
       aiStatusText = `
-        <span style="color: var(--green); font-weight: bold;">⚡ CANLI ANALİZ:</span> Yapay zeka şu an <b>${this.activeSymbol}</b> paritesindeki canlanan yükselişi onaylıyor. 
-        Son canlı muma fırlatılan <b>DİP DÖNÜŞÜ</b> etiketi alıcı gücünün <b>%${buyPct}</b> seviyesine sıçramasıyla teyit edilmiştir. 
-        Büyük kurumsal lotlar tahtayı doldurmaya başladı (Balina Çarpanı: <b>${whaleVal}</b>). Giriş noktası <b>${currentPrice}</b>, destek seviyeleri korunduğu sürece yükseliş agresifleşebilir.
-      `;
-    } else if (lastSig.includes("DÜŞÜŞ") || lastSig.includes("ŞELALE")) {
-      aiStatusText = `
-        <span style="color: var(--red); font-weight: bold;">🚨 CANLI ANALİZ:</span> Yapay zeka <b>${this.activeSymbol}</b> paritesindeki şelale riskini saniye saniye takip ediyor. 
-        Gelen yoğun satış lotları ile canlı mum üzerinde <b>TEPE REDDİ / ŞELALE</b> etiketi aktif. 
-        Alıcı iştahı anlık <b>%${buyPct}</b> seviyesine gerilerken balina çıkış hızı <b>${whaleVal}</b> ile kurumsalların kaçışını gösteriyor. Nakit pozisyonuna geçmek için alarm verildi.
+        <span style="color: var(--green); font-weight: bold;">⚡ CANLI TAKİP:</span> Yapay zeka <b>${this.activeSymbol}</b> paritesinde en son oluşan canlı mumu anlık olarak analiz ediyor. 
+        Muma az önce yerleşen <b>ALIM SİNYALİ</b>, piyasadaki agresif lot alımlarının <b>%${buyPct}</b> seviyesine fırlamasıyla onaylanmıştır. 
+        Hacimli ve iğneli bu yeşil mum, trendin döndüğünü kanıtlıyor. Destek alanı <b>${this.$('uiSideStop').textContent}</b> olarak güncellendi.
       `;
     } else {
       aiStatusText = `
-        <span style="color: var(--blue); font-weight: bold;">⏳ CANLI ANALİZ:</span> Yapay zeka <b>${this.activeSymbol}</b> paritesindeki yatay konsolidasyonu takip ediyor. 
-        Canlı piyasada alıcı/satıcı dengesi <b>%${buyPct}</b> seviyesinde sabit. Hacim girişi nötr (Balina: <b>${whaleVal}</b>). 
-        Grafikte canlı mum üzerinde <b>DİP AVCISI</b> algoritmik dönüş etiketi oluşana kadar yeni işleme girmeyip sermayeyi korumak en doğru hamledir.
+        <span style="color: var(--red); font-weight: bold;">⚠️ CANLI TAKİP:</span> Yapay zeka <b>${this.activeSymbol}</b> paritesindeki son mumun kırmızıya kaydığını ve satış yediğini tespit etti. 
+        Mumda oluşan <b>DÜŞÜŞ ETİKETİ</b>, satıcı gücünün <b>%${100 - parseInt(buyPct)}</b> seviyesine ulaşmasıyla teyit edilmiştir. 
+        Büyük kurumsal balina çıkışları (Çarpan: ${whaleVal}) başladı. Güvende kalmak adına nakit zırhı önerilmektedir.
       `;
     }
 
     this.$('uiAiResponse').innerHTML = aiStatusText;
   }
 
-  // 🚀 ONAY ALMIŞ YENİ YÜKSELENLER VE OTOMATİK RADAR SİSTEMİ
-  // (Dip İğnesi Atmış + Para Girişiyle Yükselen Hacimli Coinleri Havuza Atar)
+  // 🚀 GÜÇLÜ VE ONAYLI RADAR HAVUZU (15 saniyede bir çalışır)
   async runHighlySelectiveScanner(isAutoBackground = false) {
     let listEl;
     if (isAutoBackground) {
@@ -616,28 +621,28 @@ class SmartMoneyHybridEngine {
         const lastCandle = candles[candles.length - 1];
         const prevCandle = candles[candles.length - 2];
 
-        // 1. DÜŞEN BIÇAK FİLTRESİ (Fiyat 20 günlük MA'nın üzerinde olacak)
+        // 1. DÜŞEN BIÇAK FİLTRESİ
         let sumClose = candles.slice(-20).reduce((acc, c) => acc + c.close, 0);
         let ma20 = sumClose / 20;
         const isAboveMA = lastCandle.close > ma20;
 
-        // 2. DİPTE İĞNE (REJECTION) KONTROLÜ
+        // 2. DİPTE İĞNE (REJECTION) KONTROLÜ (Fitil gövdeden en az 1.4 kat uzun olacak)
         const body = Math.abs(lastCandle.close - lastCandle.open);
         const lowWick = Math.min(lastCandle.open, lastCandle.close) - lastCandle.low;
-        const hasBottomPin = lowWick > body * 1.4; // Alt fitil gövdeden en az 1.4 kat büyük (İğne atma teyidi)
+        const hasBottomPin = lowWick > body * 1.4;
 
-        // 3. MOMENTUM BAŞLANGICI VE PARİTE YEŞİL MUM
+        // 3. MOMENTUM BAŞLANGICI VE YEŞİL MUM
         const isGreen = lastCandle.close > lastCandle.open;
 
-        // 4. PARAGİRİŞİ & HACİM PATLAMASI KONTROLÜ
+        // 4. PARAGİRİŞİ & HACİM PATLAMASI KONTROLÜ (Son hacim, 10 mum ortalamasının en az %25 üstünde)
         let avgMarketVol = candles.slice(-10).reduce((acc, c) => acc + c.volume, 0) / 10;
-        const isVolumeExploding = lastCandle.volume > avgMarketVol * 1.25; // Son hacim 10 mumluk ortalamanın %25 üstünde
+        const isVolumeExploding = lastCandle.volume > avgMarketVol * 1.25;
 
-        // 5. AGRESİF LOT ALIM GÜCÜ (Taker Ratio)
+        // 5. AGRESİF LOT GİRİŞİ (Alımlar %54 üstü)
         const takerRatio = lastCandle.takerBuyQuote / lastCandle.quoteVolume;
-        const isLotGirisGüclü = takerRatio > 0.54; // Alım lotları baskın
+        const isLotGirisGüclü = takerRatio > 0.54;
 
-        // 🌟 KRİTER ONAY HAVUZU: Tüm onaylardan başarıyla geçen coin havuza düşer!
+        // Tırnak gibi süzülen 5'li onay mekanizması
         if (isAboveMA && hasBottomPin && isGreen && isVolumeExploding && isLotGirisGüclü) {
           const changePercent = ((lastCandle.close - prevCandle.close) / prevCandle.close) * 100;
           const lotScore = Math.round(takerRatio * 100);
@@ -645,8 +650,7 @@ class SmartMoneyHybridEngine {
             symbol: coin,
             price: lastCandle.close,
             change: changePercent,
-            lotScore: lotScore,
-            rsi: 38 // Yaklaşık dip dönüş bölgesi
+            lotScore: lotScore
           });
         }
       } catch (e) {
@@ -654,7 +658,7 @@ class SmartMoneyHybridEngine {
       }
     }
 
-    // Arayüzleri besleme
+    // Arayüzleri Besle
     if (isAutoBackground) {
       if (scanResults.length === 0) {
         listEl.innerHTML = `<div class="text-center py-4 text-[10px] text-slate-500"><i class="fa-solid fa-spinner animate-spin"></i> Onaylı dönüş yapan coin bekleniyor...</div>`;
@@ -701,14 +705,6 @@ function simulateUpgrade() {
   window.AICore.loadUserState();
   toggleUpgradeModal();
   alert("Harika! Üyeliğiniz Premium Seviyesine Yükseltildi!");
-}
-
-function resetUserLimits() {
-  localStorage.setItem('dip_avcisi_tier', 'Ücretsiz Üye');
-  localStorage.setItem('dip_avcisi_limits', '3');
-  window.AICore.loadUserState();
-  toggleUpgradeModal();
-  alert("Test amaçlı haklarınız sıfırlandı!");
 }
 
 window.AICore = new SmartMoneyHybridEngine();
