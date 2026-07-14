@@ -6,7 +6,6 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --bg: #02060d; 
@@ -29,10 +28,8 @@
     .brand-section { padding: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
     .brand-logo { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
     .badge-pro { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); font-size: 9px; padding: 4px 8px; border-radius: 4px; font-weight: 900; }
-    .search-container { padding: 12px; display: flex; gap: 6px; }
-    .input-dark { flex-grow: 1; background: var(--panel2); border: 1px solid var(--line); color: #fff; padding: 11px 14px; border-radius: 6px; outline: none; font-size: 12px; }
-    .btn-scanner-trigger { background: rgba(0,245,212,0.15); border: 1px solid rgba(0,245,212,0.3); color: var(--green); padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s; }
-    .btn-scanner-trigger:hover { background: rgba(0,245,212,0.3); }
+    .search-container { padding: 12px; }
+    .input-dark { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: #fff; padding: 11px 14px; border-radius: 6px; outline: none; font-size: 12px; }
     .filter-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 12px 12px; }
     .tab-trigger { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 8px; font-size: 11px; cursor: pointer; font-weight: 700; text-align: center; }
     .tab-trigger.active { border-color: var(--blue); color: #fff; background: rgba(0,180,216,0.05); }
@@ -61,15 +58,19 @@
     .bottom-info-bar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); background: var(--panel); font-size: 11px; color: var(--muted); }
     
     .right-sidebar { border-left: 1px solid var(--line); }
-    .sidebar-title-area { padding: 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-title-area { padding: 18px; border-bottom: 1px solid var(--line); }
     .sidebar-title-area h3 { font-size: 12px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .user-tier-badge { background: rgba(0,245,212,0.1); border: 1px solid rgba(0,245,212,0.2); color: var(--green); font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: 800; }
-    
     .sidebar-scrollable-content { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
     .signal-card-block { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
     .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .block-label { font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .decision-badge { font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 4px; text-transform: uppercase; }
+    .decision-badge.bullish { background: rgba(0,245,212,0.15); color: var(--green); border: 1px solid var(--green); }
+    .decision-badge.bearish { background: rgba(255,0,84,0.15); color: var(--red); border: 1px solid var(--red); }
+    .decision-badge.neutral { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+    .data-metric-line { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; align-items: center; }
+    .data-metric-line span { color: var(--muted); font-weight: 600; }
+    .data-metric-line b { color: #fff; font-weight: 800; font-size: 14px; }
     
     .flow-bar-container { width: 100%; background: #1e293b; height: 8px; border-radius: 4px; margin: 8px 0 4px; overflow: hidden; display: flex; }
     .flow-bar-buy { background: var(--green); height: 100%; transition: width 0.3s; }
@@ -79,28 +80,13 @@
     .sub-metric-box { background: var(--panel2); border: 1px solid var(--line); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; }
     .sub-metric-box label { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
     .sub-metric-box b { font-size: 13px; color: #fff; font-weight: 800; }
+    .sub-metric-box span { font-size: 10px; color: var(--muted); }
     
-    .action-plan-text { font-size: 11px; line-height: 1.6; color: #cbd5e1; font-weight: 500; }
+    .action-plan-text { font-size: 12px; line-height: 1.6; color: #cbd5e1; font-weight: 500; }
     .sidebar-action-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); background: var(--panel); }
     .footer-btn { background: var(--panel2); border: 1px solid var(--line); color: #fff; border-radius: 6px; padding: 12px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
     .up-text { color: var(--green) !important; }
     .down-text { color: var(--red) !important; }
-
-    /* AI Analysis Panel Styles */
-    .ai-analysis-block { background: linear-gradient(135deg, rgba(0, 245, 212, 0.03) 0%, rgba(11, 17, 30, 1) 100%); border: 1px solid rgba(0, 245, 212, 0.2); }
-    .btn-ai-generate { background: linear-gradient(90deg, var(--green) 0%, #00b4d8 100%); color: var(--bg); border: none; font-weight: 900; letter-spacing: 0.5px; transition: all 0.3s; }
-    .btn-ai-generate:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 245, 212, 0.3); }
-    .ai-commentary-box { font-size: 11px; line-height: 1.5; color: #e2e8f0; }
-
-    /* Canlı Otomatik Radar Havuzu */
-    .radar-pool-block { background: #0f172a; border: 1px solid rgba(0, 180, 216, 0.2); }
-    .radar-pool-list { display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
-    .radar-pool-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 8px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
-    .radar-pool-item:hover { border-color: var(--green); background: var(--panel2); }
-    
-    .report-metric-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding: 5px 0; }
-    .report-metric-item span { color: var(--muted); }
-    .report-metric-item b { color: #fff; }
   </style>
 </head>
 <body>
@@ -111,10 +97,7 @@
       <div class="brand-logo">SMART MONEY CORE</div>
       <span class="badge-pro">DİP AVCISI V13</span>
     </div>
-    <div class="search-container">
-      <input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" />
-      <button class="btn-scanner-trigger" id="btnRunScanner" title="Hızlı Balyoz Taraması"><i class="fa-solid fa-wand-magic-sparkles"></i> TARA</button>
-    </div>
+    <div class="search-container"><input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" /></div>
     <div class="filter-tabs">
       <button class="tab-trigger active" id="tab-USDT">USDT</button>
       <button class="tab-trigger" id="tab-BTC">BTC</button>
@@ -151,41 +134,25 @@
       </div>
       <div class="chart-box"><div id="tv_chart_container"></div></div>
     </div>
-    <div class="bottom-info-bar">
+    <footer class="bottom-info-bar">
       <div>ZIRH: <span class="up-text">Balina + Şelale + Trend Dönüş (Rejection) Aktif</span></div>
       <div>ALIM (DİP/BALYOZ): <b id="uiDipCount">0</b></div>
       <div>SATIM (TEPE/ŞELALE): <b id="uiTepeCount">0</b></div>
-    </div>
+    </footer>
   </main>
 
   <aside class="panel-card right-sidebar">
-    <div class="sidebar-title-area">
-      <h3>📊 SERMAYE & TREND</h3>
-      <div class="user-tier-badge" id="uiUserBadge">Ücretsiz Üye</div>
-    </div>
+    <div class="sidebar-title-area"><h3>📊 SERMAYE & TREND TERMİNALİ</h3></div>
     <div class="sidebar-scrollable-content">
       
-      <div class="signal-card-block ai-analysis-block">
-        <div class="badge-row" style="margin-bottom: 8px;">
-          <div class="block-label" style="color: var(--green);"><i class="fa-solid fa-brain"></i> GROQ AI (Llama 3) Analizörü</div>
-          <span class="text-xs text-gray-500 font-bold" id="uiAiLimits">Hak: 3/3</span>
+      <div class="signal-card-block">
+        <div class="badge-row">
+          <div class="block-label">Robot Hedef Yönü</div>
+          <div class="decision-badge neutral" id="uiSignalBadge"><span id="uiSignalText">HESAPLANIYOR</span></div>
         </div>
-        <div class="ai-commentary-box" id="uiAiResponse">
-          Mevcut paritenin son durum hacmini, lot girişlerini ve en son gelen BALYOZ durumunu analiz etmek için aşağıdaki butona basın.
-        </div>
-        <button class="footer-btn btn-ai-generate" id="btnRequestAI" style="width: 100%; margin-top: 12px; height: 38px;">
-          <i class="fa-solid fa-robot"></i> SON DURUMU ANALİZ ET
-        </button>
-      </div>
-
-      <div class="signal-card-block radar-pool-block">
-        <div class="badge-row" style="margin-bottom: 2px;">
-          <div class="block-label" style="color: var(--blue);"><i class="fa-solid fa-satellite-dish animate-pulse"></i> ONAY ALMIŞ YENİ YÜKSELENLER</div>
-          <span class="text-[9px] text-gray-500">5s Canlı Yenile</span>
-        </div>
-        <div class="radar-pool-list" id="uiRadarPool">
-          <div class="text-center py-4 text-xs text-slate-500">Balyoz taraması yapılıyor...</div>
-        </div>
+        <div class="data-metric-line"><span>ANLIK PİYASA FİYATI</span><b id="uiSidePrice">-</b></div>
+        <div class="data-metric-line"><span>🎯 GİRİŞ / HEDEF</span><b id="uiSideTarget">-</b></div>
+        <div class="data-metric-line"><span>🚨 STOP KORUMASI</span><b id="uiSideStop">-</b></div>
       </div>
 
       <div class="signal-card-block">
@@ -215,14 +182,8 @@
       </div>
 
       <div class="signal-card-block" style="border-left: 4px solid var(--blue);" id="uiCommentBlock">
-        <div class="block-label" style="margin-bottom: 8px;">📋 AKILLI HİBRİT EYLEM RAPORU</div>
-        <div id="uiHybridActionReport" class="space-y-2 text-xs text-slate-300">
-          <div class="report-metric-item"><span>24s Toplam Hacim:</span><b id="repVolume">-</b></div>
-          <div class="report-metric-item"><span>Canlı Alınan Lot:</span><b id="repBuyLot" class="up-text">-</b></div>
-          <div class="report-metric-item"><span>Canlı Satılan Lot:</span><b id="repSellLot" class="down-text">-</b></div>
-          <div class="report-metric-item"><span>Trend Yönü:</span><b id="repDirection">-</b></div>
-          <div class="report-metric-item"><span>Trend Gücü:</span><b id="repPower" class="text-brand-accent">-</b></div>
-        </div>
+        <div class="block-label" style="margin-bottom: 6px;">📋 AKILLI HİBRİT EYLEM RAPORU</div>
+        <p class="action-plan-text" id="uiRobotCommentary">Veriler yükleniyor. Düşüşün bittiği trend dönüş noktaları aranıyor...</p>
       </div>
     </div>
     
@@ -233,15 +194,6 @@
   </aside>
 </div>
 
-<div class="upgrade-modal-overlay" id="upgradeModal">
-  <div class="upgrade-modal-box">
-    <h2 class="text-white font-extrabold text-lg mb-2"><i class="fa-solid fa-crown text-yellow-500"></i> DİP AVCISI PREMIUM</h2>
-    <p class="text-xs text-slate-400 mb-4">Ücretsiz günlük kullanım limitiniz doldu.</p>
-    <button class="btn-premium-action" onclick="simulateUpgrade()">9.90 USDT İle Yükselt</button>
-    <button class="text-xs text-slate-500 mt-3 block w-full hover:text-slate-300" onclick="toggleUpgradeModal()">Kapat</button>
-  </div>
-</div>
-
 <script>
 class SmartMoneyHybridEngine {
   constructor() {
@@ -249,11 +201,8 @@ class SmartMoneyHybridEngine {
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
-    this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
+    this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
     
-    this.userLimits = 3;
-    this.userTier = 'Ücretsiz Üye';
-
     this.init();
   }
 
@@ -264,39 +213,9 @@ class SmartMoneyHybridEngine {
   async init() {
     this.initChart();
     this.bindEvents();
-    this.loadUserState();
     await this.loadTickers();
     await this.loadCandles();
-    
-    // 🛠️ BURASI TAM İSTEDİĞİN GİBİ 5 SANİYEDE BİR TAZELENEN CANLI RADAR YAPILDI
-    this.runBalyozScanner(true);
-    setInterval(() => this.runBalyozScanner(true), 5000); 
     setInterval(() => this.loadTickers(), 45000);
-  }
-
-  loadUserState() {
-    const savedLimits = localStorage.getItem('dip_avcisi_limits');
-    const savedTier = localStorage.getItem('dip_avcisi_tier');
-    if (savedLimits !== null) this.userLimits = parseInt(savedLimits);
-    if (savedTier !== null) this.userTier = savedTier;
-    this.updateUserUI();
-  }
-
-  saveUserState() {
-    localStorage.setItem('dip_avcisi_limits', this.userLimits);
-    localStorage.setItem('dip_avcisi_tier', this.userTier);
-    this.updateUserUI();
-  }
-
-  updateUserUI() {
-    this.$('uiUserBadge').textContent = this.userTier;
-    if (this.userTier === 'Premium Üye') {
-      this.$('uiUserBadge').className = 'user-tier-badge text-yellow-500 border-yellow-500/20';
-      this.$('uiAiLimits').textContent = 'Limit: Sınırsız';
-    } else {
-      this.$('uiUserBadge').className = 'user-tier-badge';
-      this.$('uiAiLimits').textContent = `Hak: ${this.userLimits}/3`;
-    }
   }
 
   initChart() {
@@ -336,39 +255,17 @@ class SmartMoneyHybridEngine {
 
     this.$('coinScrollList').addEventListener('click', (e) => {
       const row = e.target.closest('.coin-item-row'); if(!row) return;
-      this.selectAndLoadCoin(row.dataset.symbol);
-    });
-
-    this.$('uiRadarPool').addEventListener('click', (e) => {
-      const item = e.target.closest('.radar-pool-item'); if(!item) return;
-      this.selectAndLoadCoin(item.dataset.symbol);
+      this.activeSymbol = row.dataset.symbol;
+      const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
+      this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
+      document.querySelectorAll('.coin-item-row').forEach(r=>r.classList.remove('active')); row.classList.add('active');
+      this.loadCandles();
     });
     
     this.$('btnVoice').addEventListener('click', () => {
       if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const s = new SpeechSynthesisUtterance(this.$('uiRobotCommentary').textContent); s.lang='tr-TR'; window.speechSynthesis.speak(s); }
     });
     this.$('btnAlarm').addEventListener('click', () => alert('Dip Avcısı Radarı Aktif!'));
-
-    this.$('btnRequestAI').addEventListener('click', () => this.processAIAnalysis());
-    this.$('btnRunScanner').addEventListener('click', () => this.runBalyozScanner(false));
-  }
-
-  // 🛠️ PARİTE DEĞİŞTİĞİNDE GRAFİĞİN UFALIP BOZULMASINI ENGELLEYEN VE SERİYİ SIFIRLAYAN YENİ SEÇİCİ FONKSİYON
-  selectAndLoadCoin(symbol) {
-    this.activeSymbol = symbol;
-    const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
-    this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
-    
-    document.querySelectorAll('.coin-item-row').forEach(r => {
-      if(r.dataset.symbol === symbol) r.classList.add('active');
-      else r.classList.remove('active');
-    });
-
-    // Eski verileri kütüphaneden tamamen silip, grafiği tam boy fitleyerek bozunmayı tamir ediyoruz
-    if(this.candleSeries) this.candleSeries.setData([]);
-    if(this.volumeSeries) this.volumeSeries.setData([]);
-
-    this.loadCandles();
   }
 
   async loadTickers() {
@@ -398,7 +295,7 @@ class SmartMoneyHybridEngine {
 
   async loadCandles() {
     try {
-      this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ DİP AVCISI: Dönüş aranıyor...' };
+      this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ DİP AVCISI: Düşüşün bittiğini gösteren trend dönüşü (Reversal) aranıyor...' };
       const d = await this.api(`/api/v3/klines?symbol=${this.activeSymbol}&interval=${this.activeInterval}&limit=120`);
       
       this.candles = d.map(k => ({ 
@@ -410,8 +307,6 @@ class SmartMoneyHybridEngine {
       this.candleSeries.applyOptions({ priceFormat: { type: 'price', precision: prec } });
       this.candleSeries.setData(this.candles);
       this.volumeSeries.setData(this.candles.map(c => ({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' })));
-      
-      // Grafik eksenlerini sıfırlayan ve kaybolmayı önleyen TV fitlemesi
       this.chart.timeScale().fitContent();
       
       this.analyzeHybridFlow();
@@ -428,15 +323,7 @@ class SmartMoneyHybridEngine {
         time: Math.floor(k.t/1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v,
         quoteVolume: +k.q || 1, trades: +k.n || 1, takerBuyQuote: +k.Q || 0
       };
-      
       const last = this.candles[this.candles.length - 1];
-      if (last) {
-        let priceDiff = c.close - last.close;
-        if (priceDiff > 0) c.takerBuyQuote = c.quoteVolume * (0.62 + Math.random() * 0.12);
-        else if (priceDiff < 0) c.takerBuyQuote = c.quoteVolume * (0.22 + Math.random() * 0.12);
-        else c.takerBuyQuote = last.takerBuyQuote || (c.quoteVolume * 0.5);
-      }
-
       if(last && last.time === c.time) this.candles[this.candles.length - 1] = c; else this.candles.push(c);
       
       this.candleSeries.update(c);
@@ -444,7 +331,6 @@ class SmartMoneyHybridEngine {
       
       this.$('uiLastUpdate').textContent = new Date().toLocaleTimeString('tr-TR');
       this.$('uiCandleTime').textContent = new Date(c.time*1000).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
-      
       this.analyzeHybridFlow();
     };
   }
@@ -454,192 +340,4 @@ class SmartMoneyHybridEngine {
     
     let totalWhaleSize = 0;
     let totalMarketVol = 0;
-    for(let i = this.candles.length - 21; i < this.candles.length - 1; i++) {
-      totalWhaleSize += (this.candles[i].quoteVolume / (this.candles[i].trades || 1));
-      totalMarketVol += this.candles[i].volume;
-    }
-    const avgWhaleSize = totalWhaleSize / 20;
-    const avgMarketVol = totalMarketVol / 20;
-
-    let markers = []; this.dipCount = 0; this.tepeCount = 0;
-    let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ İzleme aktif.' };
-
-    const prec = this.getPrecision(this.candles[0].close);
-
-    for(let i = 20; i < this.candles.length; i++) {
-      const c = this.candles[i];
-      const prev = this.candles[i-1];
-      const body = Math.abs(c.close - c.open);
-      const prevBody = Math.abs(prev.close - prev.open);
-      const lowWick = Math.min(c.open, c.close) - c.low;
-      const upWick = c.high - Math.max(c.open, c.close);
-      const currentWhaleSize = c.quoteVolume / (c.trades || 1);
-      const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
-      
-      const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
-      const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
-      const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
-      const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
-      const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
-      const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
-
-      if(isSmartBuy || isBalyozBuy || isDipDonus) {
-        this.dipCount++;
-        let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
-        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${c.open.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: c.open, msg: `🟢 BALYOZ ONAYI: Sinyal $${c.open.toFixed(prec)} Alış fiyatında kilitlendi.` };
-        }
-      } 
-      else if(isSmartSell || isSelaleSell || isTepeDonus) {
-        this.tepeCount++;
-        let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
-        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${c.open.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: c.open, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${c.open.toFixed(prec)} fiyatta kilitlendi.` };
-        }
-      }
-    }
-
-    this.candleSeries.setMarkers(markers);
-    this.$('uiDipCount').textContent = this.dipCount; 
-    this.$('uiTepeCount').textContent = this.tepeCount;
-    
-    this.lastSignal = temp;
-    this.updateLiveOrderFlowUI();
-  }
-
-  // 🛠️ YENİLENEN AKILLI HİBRİT EYLEM RAPORU VERİLERİNİ HESAPLAYAN MOTOR
-  updateLiveOrderFlowUI() {
-    const last = this.candles[this.candles.length - 1];
-    if(!last) return;
-
-    if(this.lastSignal.decision === 'DIP_ALIM') {
-      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (BALYOZ)"; this.$('uiTrendStatus').className = "up-text";
-    } else if(this.lastSignal.decision === 'TEPE_SATIM') {
-      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
-    } else {
-      this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
-    }
-
-    const takerRatio = last.takerBuyQuote / last.quoteVolume || 0.5;
-    const buyPct = Math.round(takerRatio * 100);
-    const sellPct = 100 - buyPct;
-
-    this.$('uiFlowBuy').style.width = `${buyPct}%`;
-    this.$('uiFlowSell').style.width = `${sellPct}%`;
-    this.$('uiFlowBuyPct').textContent = `${buyPct}%`;
-    this.$('uiFlowSellPct').textContent = `${sellPct}%`;
-
-    // 🛠️ AKILLI HİBRİT EYLEM PANELİ VERİ AKTARIMI (İSTEDİĞİN GİBİ!)
-    this.$('repVolume').textContent = `$${this.formatNumber(last.quoteVolume, 0)}`;
-    this.$('repBuyLot').textContent = `${this.formatNumber(last.takerBuyQuote, 2)} Lot`;
-    this.$('repSellLot').textContent = `${this.formatNumber(last.quoteVolume - last.takerBuyQuote, 2)} Lot`;
-    this.$('repDirection').textContent = last.close >= last.open ? "YUKARI (BOĞA)" : "AŞAĞI (AYI)";
-    this.$('repDirection').className = last.close >= last.open ? "up-text font-bold" : "down-text font-bold";
-    
-    // Güç yüzdesi (Simüle ADX İvme Hesabı)
-    let powerPct = Math.round(buyPct > sellPct ? buyPct : sellPct);
-    this.$('repPower').textContent = `%${powerPct} GÜÇLÜ`;
-
-    const whaleMultiplier = (last.quoteVolume / (last.trades || 1)) / 1; 
-    this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
-  }
-
-  processAIAnalysis() {
-    if (this.userTier !== 'Premium Üye' && this.userLimits <= 0) {
-      document.getElementById('upgradeModal').style.display = 'flex';
-      return;
-    }
-    if (this.userTier !== 'Premium Üye') { this.userLimits -= 1; this.saveUserState(); }
-
-    const resBox = this.$('uiAiResponse');
-    resBox.innerHTML = `<div style="text-align: center; padding: 10px;"><i class="fa-solid fa-spinner animate-spin"></i> Veriler çözümleniyor...</div>`;
-
-    const buyPct = this.$('uiFlowBuyPct').textContent;
-    const lastSig = this.$('uiTrendStatus').textContent;
-
-    setTimeout(() => {
-      resBox.innerHTML = `
-        <strong>🤖 Groq AI Raporu (${this.activeSymbol}):</strong><br/>
-        • <b>Para Giriş Dengesi:</b> Alıcı lot ağırlığı %${buyPct} seviyesindedir.<br/>
-        • <b>Robot Durumu:</b> Sinyal motorunda en son <b>${lastSig}</b> yapısı kilitlenmiştir. Akıllı hibrit panel verilerindeki hacim trend yönünü desteklemektedir.
-      `;
-    }, 1200);
-  }
-
-  // 🚀 ONAY ALMIŞ GÜNLÜK COIN TARAMA SİSTEMİ (TAM 5 SANİYEDE BİR OTO YENİLER)
-  async runBalyozScanner(isAutoBackground = false) {
-    let listEl = isAutoBackground ? this.$('uiRadarPool') : this.$('coinScrollList');
-    if (!isAutoBackground) listEl.innerHTML = `<div class="text-center py-12 text-xs text-muted"><i class="fa-solid fa-sync animate-spin mr-2"></i>Balyoz taranıyor...</div>`;
-
-    const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
-    let scanResults = [];
-
-    for (let coin of targetCoins) {
-      try {
-        const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=4h&limit=40`);
-        const candles = d.map(k => ({ open: parseFloat(k[1]), close: parseFloat(k[4]) }));
-        
-        const lastCandle = candles[candles.length - 1];
-        const prevCandle = candles[candles.length - 2];
-
-        const body = Math.abs(lastCandle.close - lastCandle.open);
-        const prevBody = Math.abs(prevCandle.close - prevCandle.open);
-
-        // Koddaki orijinal BALYOZ formülün (`body > prevBody * 1.35`)
-        const isBalyozBuyFormed = lastCandle.close > lastCandle.open && prevCandle.close < prevCandle.open && body > prevBody * 1.35;
-
-        if (isBalyozBuyFormed) {
-          scanResults.push({
-            symbol: coin,
-            price: lastCandle.close,
-            balyozPrice: lastCandle.open // Bulduğu anki (mum başlangıç) sabit fiyatı
-          });
-        }
-      } catch (e) {}
-    }
-
-    if (scanResults.length === 0) {
-      listEl.innerHTML = `<div class="text-center py-4 text-[10px] text-slate-500"><i class="fa-solid fa-spinner animate-spin"></i> Aktif BALYOZ AL formasyonu aranıyor...</div>`;
-    } else {
-      listEl.innerHTML = scanResults.map(s => isAutoBackground ? `
-        <div class="radar-pool-item" data-symbol="${s.symbol}">
-          <div class="font-bold text-white"><i class="fa-solid fa-hammer text-green-400 mr-1 animate-pulse"></i> ${s.symbol}</div>
-          <div class="text-[9px] text-brand-primary">Bulduğu Fiyat: $${s.balyozPrice.toLocaleString('en-US')}</div>
-        </div>
-      ` : `
-        <div class="coin-item-row ${s.symbol===this.activeSymbol?'active':''}" data-symbol="${s.symbol}">
-          <div class="coin-name-cell">🚀 ${s.symbol}</div>
-          <div class="coin-price-cell">$${this.formatNumber(s.price, this.getPrecision(s.price))}<br/><span style="font-size:8px; color: var(--green);">Alış: $${s.balyozPrice.toLocaleString('en-US')}</span></div>
-          <div class="coin-change-cell up-text">BALYOZ</div>
-        </div>
-      `).join('');
-    }
-  }
-
-  async api(p) {
-    for(const b of this.API_BASES) { try { const r = await fetch(b+p); if(r.ok) return await r.json(); } catch(e){} }
-    throw new Error();
-  }
-}
-
-function toggleUpgradeModal() {
-  const modal = document.getElementById('upgradeModal');
-  modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-}
-
-function simulateUpgrade() {
-  localStorage.setItem('dip_avcisi_tier', 'Premium Üye');
-  localStorage.setItem('dip_avcisi_limits', '9999');
-  window.AICore.loadUserState();
-  toggleUpgradeModal();
-  alert("Premium Aktif Edildi!");
-}
-
-window.AICore = new SmartMoneyHybridEngine();
-</script>
-</body>
-</html>
+    for(let
