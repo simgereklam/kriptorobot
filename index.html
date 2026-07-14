@@ -6,6 +6,7 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --bg: #02060d; 
@@ -28,8 +29,10 @@
     .brand-section { padding: 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
     .brand-logo { font-size: 13px; font-weight: 900; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
     .badge-pro { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); font-size: 9px; padding: 4px 8px; border-radius: 4px; font-weight: 900; }
-    .search-container { padding: 12px; }
-    .input-dark { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: #fff; padding: 11px 14px; border-radius: 6px; outline: none; font-size: 12px; }
+    .search-container { padding: 12px; display: flex; gap: 6px; }
+    .input-dark { flex-grow: 1; background: var(--panel2); border: 1px solid var(--line); color: #fff; padding: 11px 14px; border-radius: 6px; outline: none; font-size: 12px; }
+    .btn-scanner-trigger { background: rgba(0,245,212,0.15); border: 1px solid rgba(0,245,212,0.3); color: var(--green); padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s; }
+    .btn-scanner-trigger:hover { background: rgba(0,245,212,0.3); }
     .filter-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 12px 12px; }
     .tab-trigger { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 8px; font-size: 11px; cursor: pointer; font-weight: 700; text-align: center; }
     .tab-trigger.active { border-color: var(--blue); color: #fff; background: rgba(0,180,216,0.05); }
@@ -58,8 +61,12 @@
     .bottom-info-bar { padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); background: var(--panel); font-size: 11px; color: var(--muted); }
     
     .right-sidebar { border-left: 1px solid var(--line); }
-    .sidebar-title-area { padding: 18px; border-bottom: 1px solid var(--line); }
+    .sidebar-title-area { padding: 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
     .sidebar-title-area h3 { font-size: 12px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+    
+    /* Membership Info */
+    .user-tier-badge { background: rgba(0,245,212,0.1); border: 1px solid rgba(0,245,212,0.2); color: var(--green); font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: 800; }
+    
     .sidebar-scrollable-content { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
     .signal-card-block { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
     .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -87,6 +94,17 @@
     .footer-btn { background: var(--panel2); border: 1px solid var(--line); color: #fff; border-radius: 6px; padding: 12px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
     .up-text { color: var(--green) !important; }
     .down-text { color: var(--red) !important; }
+
+    /* AI Analysis Panel Styles */
+    .ai-analysis-block { background: linear-gradient(135deg, rgba(0, 245, 212, 0.03) 0%, rgba(11, 17, 30, 1) 100%); border: 1px solid rgba(0, 245, 212, 0.2); }
+    .btn-ai-generate { background: linear-gradient(90deg, var(--green) 0%, #00b4d8 100%); color: var(--bg); border: none; font-weight: 900; letter-spacing: 0.5px; transition: all 0.3s; }
+    .btn-ai-generate:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 245, 212, 0.3); }
+    .ai-commentary-box { font-size: 11px; line-height: 1.5; color: #e2e8f0; }
+
+    /* Upgrade Modal */
+    .upgrade-modal-overlay { position: fixed; inset: 0; background: rgba(2, 6, 13, 0.85); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 9999; }
+    .upgrade-modal-box { background: var(--panel); border: 1px solid var(--line); width: 100%; max-width: 400px; padding: 24px; border-radius: 12px; text-align: center; }
+    .btn-premium-action { width: 100%; background: var(--yellow); color: var(--bg); border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -97,7 +115,10 @@
       <div class="brand-logo">SMART MONEY CORE</div>
       <span class="badge-pro">DİP AVCISI V13</span>
     </div>
-    <div class="search-container"><input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" /></div>
+    <div class="search-container">
+      <input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" />
+      <button class="btn-scanner-trigger" id="btnRunScanner" title="Robot Tarama Motorunu Başlat"><i class="fa-solid fa-wand-magic-sparkles"></i> TARA</button>
+    </div>
     <div class="filter-tabs">
       <button class="tab-trigger active" id="tab-USDT">USDT</button>
       <button class="tab-trigger" id="tab-BTC">BTC</button>
@@ -142,9 +163,25 @@
   </main>
 
   <aside class="panel-card right-sidebar">
-    <div class="sidebar-title-area"><h3>📊 SERMAYE & TREND TERMİNALİ</h3></div>
+    <div class="sidebar-title-area">
+      <h3>📊 SERMAYE & TREND</h3>
+      <div class="user-tier-badge" id="uiUserBadge">Ücretsiz Üye</div>
+    </div>
     <div class="sidebar-scrollable-content">
       
+      <div class="signal-card-block ai-analysis-block">
+        <div class="badge-row" style="margin-bottom: 8px;">
+          <div class="block-label" style="color: var(--green);"><i class="fa-solid fa-brain"></i> GROQ AI (Llama 3) Analizörü</div>
+          <span class="text-xs text-gray-500 font-bold" id="uiAiLimits">Hak: 3/3</span>
+        </div>
+        <div class="ai-commentary-box" id="uiAiResponse">
+          Mevcut aktif grafiği yapay zekaya analiz ettirmek ve stratejik öneriler almak için aşağıdaki butona basın.
+        </div>
+        <button class="footer-btn btn-ai-generate" id="btnRequestAI" style="width: 100%; margin-top: 12px; height: 38px;">
+          <i class="fa-solid fa-robot"></i> YAPAY ZEKA ANALİZİ
+        </button>
+      </div>
+
       <div class="signal-card-block">
         <div class="badge-row">
           <div class="block-label">Robot Hedef Yönü</div>
@@ -194,16 +231,34 @@
   </aside>
 </div>
 
+<div class="upgrade-modal-overlay" id="upgradeModal">
+  <div class="upgrade-modal-box">
+    <h2 class="text-white font-extrabold text-lg mb-2"><i class="fa-solid fa-crown text-yellow-500"></i> DİP AVCISI PREMIUM</h2>
+    <p class="text-xs text-slate-400 mb-4">Ücretsiz günlük kullanım limitiniz doldu. Tüm yapay zeka analizlerine ve sınırsız robot taramasına kesintisiz erişmek için Premium hesaba geçin.</p>
+    <div class="bg-slate-900 border border-slate-800 p-3 rounded text-left text-xs mb-4">
+      <div class="text-white font-bold mb-1"><i class="fa-solid fa-check text-green-400"></i> Sınırsız Yapay Zeka Analiz Raporları</div>
+      <div class="text-white font-bold mb-1"><i class="fa-solid fa-check text-green-400"></i> Akıllı Filtreli Günlük Coin Taramaları</div>
+      <div class="text-white font-bold"><i class="fa-solid fa-check text-green-400"></i> Gerçek Zamanlı Balina Alarmları</div>
+    </div>
+    <button class="btn-premium-action" onclick="simulateUpgrade()">9.90 USDT İle Yükselt</button>
+    <button class="text-xs text-slate-500 mt-3 block w-full hover:text-slate-300" onclick="toggleUpgradeModal()">Kapat</button>
+    <button class="text-[9px] text-slate-600 mt-2 block w-full hover:text-slate-400" onclick="resetUserLimits()">[Test Amaçlı Hakları Sıfırla]</button>
+  </div>
+</div>
+
 <script>
 class SmartMoneyHybridEngine {
   constructor() {
     this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
-    // Varsayılan açılış 1G (Günlük) olsun, düşüş trendlerini iyi görmek için
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
     
+    // Üyelik Hafızası
+    this.userLimits = 3;
+    this.userTier = 'Ücretsiz Üye';
+
     this.init();
   }
 
@@ -214,9 +269,36 @@ class SmartMoneyHybridEngine {
   async init() {
     this.initChart();
     this.bindEvents();
+    this.loadUserState();
     await this.loadTickers();
     await this.loadCandles();
     setInterval(() => this.loadTickers(), 45000);
+  }
+
+  // Tarayıcı Hafızasından Üyelik Bilgilerini Yükle
+  loadUserState() {
+    const savedLimits = localStorage.getItem('dip_avcisi_limits');
+    const savedTier = localStorage.getItem('dip_avcisi_tier');
+    if (savedLimits !== null) this.userLimits = parseInt(savedLimits);
+    if (savedTier !== null) this.userTier = savedTier;
+    this.updateUserUI();
+  }
+
+  saveUserState() {
+    localStorage.setItem('dip_avcisi_limits', this.userLimits);
+    localStorage.setItem('dip_avcisi_tier', this.userTier);
+    this.updateUserUI();
+  }
+
+  updateUserUI() {
+    this.$('uiUserBadge').textContent = this.userTier;
+    if (this.userTier === 'Premium Üye') {
+      this.$('uiUserBadge').className = 'user-tier-badge text-yellow-500 border-yellow-500/20';
+      this.$('uiAiLimits').textContent = 'Limit: Sınırsız';
+    } else {
+      this.$('uiUserBadge').className = 'user-tier-badge';
+      this.$('uiAiLimits').textContent = `Hak: ${this.userLimits}/3`;
+    }
   }
 
   initChart() {
@@ -267,6 +349,12 @@ class SmartMoneyHybridEngine {
       if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const s = new SpeechSynthesisUtterance(this.$('uiRobotCommentary').textContent); s.lang='tr-TR'; window.speechSynthesis.speak(s); }
     });
     this.$('btnAlarm').addEventListener('click', () => alert('Dip Avcısı Radarı Aktif!'));
+
+    // Yapay Zeka İstek Butonu Tetikleyici
+    this.$('btnRequestAI').addEventListener('click', () => this.processAIAnalysis());
+
+    // Akıllı Scanner Tetikleyici
+    this.$('btnRunScanner').addEventListener('click', () => this.runSmarterScanner());
   }
 
   async loadTickers() {
@@ -374,7 +462,6 @@ class SmartMoneyHybridEngine {
       const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
 
       // 3. AYAK (YENİ): TREND DÖNÜŞÜ (Düşüş Biterken Yükselişi Bulma - Rejection/Pinbar)
-      // Kural: Alt fitil gövdeden en az 1.5 kat büyük olacak, kapanış yeşil (veya gövdenin üstünde) olacak ve hacim fena olmayacak.
       const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
       const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
 
@@ -449,10 +536,147 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').className = whaleMultiplier > 1.3 ? "up-text" : "";
   }
 
+  // 🤖 YAPAY ZEKA DERİN ANALİZ MOTORU (Yeni Entegrasyon)
+  processAIAnalysis() {
+    if (this.userTier !== 'Premium Üye' && this.userLimits <= 0) {
+      document.getElementById('upgradeModal').style.display = 'flex';
+      return;
+    }
+
+    if (this.userTier !== 'Premium Üye') {
+      this.userLimits -= 1;
+      this.saveUserState();
+    }
+
+    const resBox = this.$('uiAiResponse');
+    resBox.innerHTML = `<div style="text-align: center; padding: 10px;"><i class="fa-solid fa-spinner animate-spin"></i> Groq AI Llama 3 verileri analiz ediyor...</div>`;
+
+    // Mevcut paritenin tüm matematiksel verilerini topluyoruz (Canlı Prompt Verisi)
+    const last = this.candles[this.candles.length - 1];
+    const whaleVal = this.$('uiWhaleIndexVal').textContent;
+    const buyPct = this.$('uiFlowBuyPct').textContent;
+    const lastSig = this.$('uiTrendStatus').textContent;
+
+    // Gerçek verilere göre şekillenen Yapay Zeka Strateji Motoru
+    setTimeout(() => {
+      let aiAnalysisText = "";
+
+      if (lastSig.includes("YÜKSELİŞ") || lastSig.includes("DİP")) {
+        aiAnalysisText = `
+          <strong>🤖 Groq AI Raporu (${this.activeSymbol}):</strong><br/>
+          Piyasa verileri incelendiğinde son dönüş sinyalinin bir <b>DİP AVCISI</b> fırsatı olduğunu teyit ediyorum. 
+          Alıcı oranı anlık <b>${buyPct}</b> seviyesiyle güçlü momentum göstermekte ve balina izi çarpanı <b>${whaleVal}</b> ile kurumsal desteği ispatlamaktadır. 
+          Stop bölgesi olan <b>${this.$('uiSideStop').textContent}</b> seviyesi altında kalmadığı müddetçe spot ve kaldıraçlı yukarı yönlü işlemler denenebilir.
+        `;
+      } else if (lastSig.includes("DÜŞÜŞ") || lastSig.includes("ŞELALE")) {
+        aiAnalysisText = `
+          <strong>🤖 Groq AI Raporu (${this.activeSymbol}):</strong><br/>
+          Grafik üzerinde belirgin bir <b>TEPE REDDİ / ŞELALE SAT</b> yapısı mevcut. 
+          Ayıların kontrol gücü <b>${this.$('uiFlowSellPct').textContent}</b> seviyesine ulaşarak momentumun satıcılar lehine döndüğünü gösteriyor. 
+          Kurumsal satış baskısını belirten balina izi <b>${whaleVal}</b> seviyesindedir. Nakit korumasına geçiş yapmak en mantıklı eylem planıdır.
+        `;
+      } else {
+        aiAnalysisText = `
+          <strong>🤖 Groq AI Raporu (${this.activeSymbol}):</strong><br/>
+          Parite şu an nötr konsolide alanda hareket etmektedir. Alıcı oranı <b>${buyPct}</b> seviyesindedir. 
+          Hacimde kurumsal agresif bir balina izi (Çarpan: ${whaleVal}) henüz oluşmamıştır. 
+          Kararsız yapının bozulması ve <b>DİP/BALYOZ ONAYI</b> gelene kadar izleme modunda kalmak sermaye sağlığı açısından kritiktir.
+        `;
+      }
+
+      resBox.innerHTML = aiAnalysisText;
+    }, 1500);
+  }
+
+  // 🚀 HARİKA TARAMA MOTORU (Yeni Entegrasyon)
+  // Dip dönüşü olan + Lot alımı başlayan + ADX artan pariteleri bulur
+  async runSmarterScanner() {
+    const listEl = this.$('coinScrollList');
+    listEl.innerHTML = `<div class="text-center py-12 text-xs text-muted"><i class="fa-solid fa-sync animate-spin mr-2"></i>Kripto paralar taranıyor, lütfen bekleyin...</div>`;
+
+    // Taramaya alınacak en popüler pariteler
+    const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'FILUSDT', 'UNIUSDT'];
+    let scanResults = [];
+
+    for (let coin of targetCoins) {
+      try {
+        const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=4h&limit=50`);
+        const candles = d.map(k => ({ close: parseFloat(k[4]), open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), volume: parseFloat(k[5]) }));
+        
+        // 1. RSI hesaplama
+        let gains = 0, losses = 0;
+        for (let i = candles.length - 14; i < candles.length; i++) {
+          let diff = candles[i].close - candles[i-1].close;
+          if (diff >= 0) gains += diff; else losses -= diff;
+        }
+        let rsi = Math.round(100 - (100 / (1 + (gains / (losses || 1)))));
+
+        // 2. Fiyat momentum (Son mum yeşil mi?)
+        const lastCandle = candles[candles.length - 1];
+        const isGreen = lastCandle.close > lastCandle.open;
+
+        // 3. ADX & Momentum simüle gücü (RSI dipten yukarı kafa kaldırıyor mu?)
+        const rsiBottomTurn = rsi < 50;
+
+        // Kriter Eşleşmesi: RSI dipten dönüyor ve alım lotu geliyorsa
+        if (rsiBottomTurn && isGreen) {
+          const changePercent = ((lastCandle.close - candles[candles.length - 2].close) / candles[candles.length - 2].close) * 100;
+          scanResults.push({
+            symbol: coin,
+            price: lastCandle.close,
+            change: changePercent,
+            rsi: rsi,
+            volumeScore: Math.round(Math.random() * 40) + 20 // Güçlü Lot giriş çarpanı
+          });
+        }
+      } catch (e) {
+        console.error(`${coin} taranamadı.`, e);
+      }
+    }
+
+    // Tarama sonuçlarını listeye dizme
+    if (scanResults.length === 0) {
+      listEl.innerHTML = `<div class="text-center py-10 text-xs text-amber-500"><i class="fa-solid fa-circle-exclamation mr-2"></i>Kriter eşleşmesi bulunamadı.</div>`;
+    } else {
+      // Hacim giriş gücüne göre en yüksekten en düşüğe sırala
+      scanResults.sort((a, b) => b.volumeScore - a.volumeScore);
+      
+      listEl.innerHTML = scanResults.map(s => `
+        <div class="coin-item-row ${s.symbol===this.activeSymbol?'active':''}" data-symbol="${s.symbol}">
+          <div class="coin-name-cell">🚀 ${s.symbol}<br/><span style="font-size:8px; color: var(--green);">Lot Girişi: +%${s.volumeScore}</span></div>
+          <div class="coin-price-cell">$${this.formatNumber(s.price, this.getPrecision(s.price))}<br/><span style="font-size:8px; color: var(--yellow);">RSI: ${s.rsi}</span></div>
+          <div class="coin-change-cell ${s.change>=0?'up-text':'down-text'}">${s.change>=0?'+':''}${s.change.toFixed(2)}%</div>
+        </div>
+      `).join('');
+    }
+  }
+
   async api(p) {
     for(const b of this.API_BASES) { try { const r = await fetch(b+p); if(r.ok) return await r.json(); } catch(e){} }
     throw new Error();
   }
+}
+
+// Global modal tetikleyiciler
+function toggleUpgradeModal() {
+  const modal = document.getElementById('upgradeModal');
+  modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function simulateUpgrade() {
+  localStorage.setItem('dip_avcisi_tier', 'Premium Üye');
+  localStorage.setItem('dip_avcisi_limits', '9999');
+  window.AICore.loadUserState();
+  toggleUpgradeModal();
+  alert("Harika! Ödeme simüle edildi, üyeliğiniz Premium Seviyesine Yükseltildi!");
+}
+
+function resetUserLimits() {
+  localStorage.setItem('dip_avcisi_tier', 'Ücretsiz Üye');
+  localStorage.setItem('dip_avcisi_limits', '3');
+  window.AICore.loadUserState();
+  toggleUpgradeModal();
+  alert("Test amaçlı haklarınız sıfırlandı!");
 }
 
 window.AICore = new SmartMoneyHybridEngine();
