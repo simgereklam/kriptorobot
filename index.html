@@ -257,7 +257,7 @@ class SmartMoneyHybridEngine {
       const row = e.target.closest('.coin-item-row'); if(!row) return;
       this.activeSymbol = row.dataset.symbol;
       const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
-      this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
+      this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>activeTfText</span>`;
       document.querySelectorAll('.coin-item-row').forEach(r=>r.classList.remove('active')); row.classList.add('active');
       this.loadCandles();
     });
@@ -340,4 +340,117 @@ class SmartMoneyHybridEngine {
     
     let totalWhaleSize = 0;
     let totalMarketVol = 0;
-    for(let
+    for(let i = this.candles.length - 21; i < this.candles.length - 1; i++) {
+      totalWhaleSize += (this.candles[i].quoteVolume / (this.candles[i].trades || 1));
+      totalMarketVol += this.candles[i].volume;
+    }
+    const avgWhaleSize = totalWhaleSize / 20;
+    const avgMarketVol = totalMarketVol / 20;
+
+    let markers = []; this.dipCount = 0; this.tepeCount = 0;
+    let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ PİYASA İZLENİYOR: Şelale düşüşleri veya trend dönüşleri bekleniyor.' };
+
+    // 🛠️ DÖNGÜYÜ SON CANLI MUM DA DAHİL OLACAK ŞEKİLDE ÇALIŞTIRAN DÜZELTME (i < this.candles.length)
+    for(let i = 20; i < this.candles.length; i++) {
+      const c = this.candles[i];
+      const prev = this.candles[i-1];
+      
+      const body = Math.abs(c.close - c.open);
+      const prevBody = Math.abs(prev.close - prev.open);
+      
+      const lowWick = Math.min(c.open, c.close) - c.low;
+      const upWick = c.high - Math.max(c.open, c.close);
+
+      const currentWhaleSize = c.quoteVolume / (c.trades || 1);
+      const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
+      
+      const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
+      const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
+
+      const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
+      const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
+
+      const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
+      const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
+
+      if(isSmartBuy || isBalyozBuy || isDipDonus) {
+        this.dipCount++;
+        let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
+        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: label });
+        
+        if(i === this.candles.length - 1) {
+          temp = { decision: 'DIP_ALIM', price: c.close, stop: c.low * 0.99, msg: `🟢 YÜKSELİŞ BAŞLIYOR: ${isDipDonus ? 'Satıcılar yoruldu, DİP DÖNÜŞ iğnesi bırakıldı.' : 'Güçlü alım ivmesi yakalandı.'}` };
+        }
+      } 
+      else if(isSmartSell || isSelaleSell || isTepeDonus) {
+        this.tepeCount++;
+        let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
+        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: label });
+        
+        if(i === this.candles.length - 1) {
+          temp = { decision: 'TEPE_SATIM', price: c.close, stop: 0, msg: `🔴 DÜŞÜŞ TEHLİKESİ: ${isTepeDonus ? 'Alıcılar tükendi, TEPEDE RED iğnesi yedik.' : 'Satış baskısı çok yüksek, nakite geçin.'}` };
+        }
+      }
+    }
+
+    this.candleSeries.setMarkers(markers);
+    this.$('uiDipCount').textContent = this.dipCount; 
+    this.$('uiTepeCount').textContent = this.tepeCount;
+    
+    if(temp.decision !== 'IZLEME' || this.lastSignal.decision === 'IZLEME') {
+      this.lastSignal = temp;
+    }
+    
+    this.updateLiveOrderFlowUI(avgWhaleSize);
+  }
+
+  updateLiveOrderFlowUI(avgWhaleSize) {
+    const last = this.candles[this.candles.length - 1];
+    const prec = this.getPrecision(last.close);
+    
+    this.$('uiSidePrice').textContent = `$${this.formatNumber(last.close, prec)}`;
+    const sb = this.$('uiSignalBadge'); const st = this.$('uiSignalText'); const cb = this.$('uiCommentBlock');
+
+    if(this.lastSignal.decision === 'DIP_ALIM') {
+      sb.className = 'decision-badge bullish'; st.textContent = 'GİRİŞ ONAYLI 🟢'; cb.style.borderLeftColor = 'var(--green)';
+      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "up-text";
+      this.$('uiSideStop').textContent = `$${this.formatNumber(this.lastSignal.stop, prec)}`; this.$('uiSideStop').className = "down-text";
+      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (DİP)"; this.$('uiTrendStatus').className = "up-text";
+    } else if(this.lastSignal.decision === 'TEPE_SATIM') {
+      sb.className = 'decision-badge bearish'; st.textContent = 'ACİL ÇIKIŞ 🔴'; cb.style.borderLeftColor = 'var(--red)';
+      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "down-text";
+      this.$('uiSideStop').textContent = 'NAKİT ZIRHI'; this.$('uiSideStop').className = "";
+      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
+    } else {
+      sb.className = 'decision-badge neutral'; st.textContent = 'İZLEME MODU ⏳'; cb.style.borderLeftColor = 'var(--blue)';
+      this.$('uiSideTarget').textContent = 'FIRSAT BEKLENİYOR'; this.$('uiSideTarget').className = "";
+      this.$('uiSideStop').textContent = '-'; this.$('uiSideStop').className = "";
+      this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
+    }
+
+    this.$('uiRobotCommentary').textContent = this.lastSignal.msg;
+
+    const takerRatio = last.takerBuyQuote / last.quoteVolume || 0.5;
+    const buyPct = Math.round(takerRatio * 100);
+    const sellPct = 100 - buyPct;
+
+    this.$('uiFlowBuy').style.width = `${buyPct}%`;
+    this.$('uiFlowSell').style.width = `${sellPct}%`;
+    this.$('uiFlowBuyPct').textContent = `${buyPct}%`;
+    this.$('uiFlowSellPct').textContent = `${sellPct}%`;
+
+    const whaleMultiplier = (last.quoteVolume / (last.trades || 1)) / (avgWhaleSize || 1);
+    this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
+    this.$('uiWhaleIndexVal').className = whaleMultiplier > 1.3 ? "up-text" : "";
+  }
+
+  async api(p) {
+    for(const b of this.API_BASES) { try { const r = await fetch(b+p); if(r.ok) return await r.json(); } catch(e){} }
+    throw new Error();
+  }
+}
+
+window.AICore = new SmartMoneyHybridEngine();
+</script>
+</body>
+</html>
