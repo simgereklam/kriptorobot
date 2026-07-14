@@ -71,13 +71,6 @@
     .signal-card-block { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
     .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .block-label { font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .decision-badge { font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 4px; text-transform: uppercase; }
-    .decision-badge.bullish { background: rgba(0,245,212,0.15); color: var(--green); border: 1px solid var(--green); }
-    .decision-badge.bearish { background: rgba(255,0,84,0.15); color: var(--red); border: 1px solid var(--red); }
-    .decision-badge.neutral { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
-    .data-metric-line { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; align-items: center; }
-    .data-metric-line span { color: var(--muted); font-weight: 600; }
-    .data-metric-line b { color: #fff; font-weight: 800; font-size: 14px; }
     
     .flow-bar-container { width: 100%; background: #1e293b; height: 8px; border-radius: 4px; margin: 8px 0 4px; overflow: hidden; display: flex; }
     .flow-bar-buy { background: var(--green); height: 100%; transition: width 0.3s; }
@@ -87,7 +80,6 @@
     .sub-metric-box { background: var(--panel2); border: 1px solid var(--line); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; }
     .sub-metric-box label { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
     .sub-metric-box b { font-size: 13px; color: #fff; font-weight: 800; }
-    .sub-metric-box span { font-size: 10px; color: var(--muted); }
     
     .action-plan-text { font-size: 12px; line-height: 1.6; color: #cbd5e1; font-weight: 500; }
     .sidebar-action-footer { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); background: var(--panel); }
@@ -123,7 +115,7 @@
     </div>
     <div class="search-container">
       <input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" />
-      <button class="btn-scanner-trigger" id="btnRunScanner" title="Robot Tarama Motorunu Başlat"><i class="fa-solid fa-wand-magic-sparkles"></i> TARA</button>
+      <button class="btn-scanner-trigger" id="btnRunScanner" title="Hızlı Balyoz Taraması"><i class="fa-solid fa-wand-magic-sparkles"></i> TARA</button>
     </div>
     <div class="filter-tabs">
       <button class="tab-trigger active" id="tab-USDT">USDT</button>
@@ -161,11 +153,11 @@
       </div>
       <div class="chart-box"><div id="tv_chart_container"></div></div>
     </div>
-    <footer class="bottom-info-bar">
+    <div class="bottom-info-bar">
       <div>ZIRH: <span class="up-text">Balina + Şelale + Trend Dönüş (Rejection) Aktif</span></div>
       <div>ALIM (DİP/BALYOZ): <b id="uiDipCount">0</b></div>
       <div>SATIM (TEPE/ŞELALE): <b id="uiTepeCount">0</b></div>
-    </footer>
+    </div>
   </main>
 
   <aside class="panel-card right-sidebar">
@@ -175,7 +167,7 @@
     </div>
     <div class="sidebar-scrollable-content">
       
-      <!-- Yapay Zeka Son Durum Analiz Modülü (Manuel / Kasma Yapmaz) -->
+      <!-- Yapay Zeka Son Durum Analiz Modülü (Manuel / Sıfır Kasma) -->
       <div class="signal-card-block ai-analysis-block">
         <div class="badge-row" style="margin-bottom: 8px;">
           <div class="block-label" style="color: var(--green);"><i class="fa-solid fa-brain"></i> GROQ AI (Llama 3) Analizörü</div>
@@ -189,7 +181,7 @@
         </button>
       </div>
 
-      <!-- Canlı Otomatik Radar Havuzu (Tamamen Balyoz Sinyallerine Odaklı) -->
+      <!-- Canlı Otomatik Radar Havuzu (Orijinal Balyoz Formasyonlu) -->
       <div class="signal-card-block radar-pool-block">
         <div class="badge-row" style="margin-bottom: 2px;">
           <div class="block-label" style="color: var(--blue);"><i class="fa-solid fa-satellite-dish animate-pulse"></i> ONAY ALMIŞ YENİ YÜKSELENLER</div>
@@ -198,16 +190,6 @@
         <div class="radar-pool-list" id="uiRadarPool">
           <div class="text-center py-4 text-xs text-slate-500">Balyoz taraması yapılıyor...</div>
         </div>
-      </div>
-
-      <div class="signal-card-block">
-        <div class="badge-row">
-          <div class="block-label">Robot Hedef Yönü</div>
-          <div class="decision-badge neutral" id="uiSignalBadge"><span id="uiSignalText">HESAPLANIYOR</span></div>
-        </div>
-        <div class="data-metric-line"><span>ANLIK PİYASA FİYATI</span><b id="uiSidePrice">-</b></div>
-        <div class="data-metric-line"><span>🎯 GİRİŞ / HEDEF</span><b id="uiSideTarget">-</b></div>
-        <div class="data-metric-line"><span>🚨 STOP KORUMASI</span><b id="uiSideStop">-</b></div>
       </div>
 
       <div class="signal-card-block">
@@ -268,9 +250,6 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
     
-    // Fiyat sabitleme hafızası
-    this.fixedMarkerPrices = {};
-
     this.userLimits = 3;
     this.userTier = 'Ücretsiz Üye';
 
@@ -289,7 +268,7 @@ class SmartMoneyHybridEngine {
     await this.loadCandles();
     
     this.runBalyozScanner(true);
-    setInterval(() => this.runBalyozScanner(true), 30000); // 30 saniyede bir havuzu günceller
+    setInterval(() => this.runBalyozScanner(true), 30000);
     setInterval(() => this.loadTickers(), 45000);
   }
 
@@ -440,7 +419,6 @@ class SmartMoneyHybridEngine {
         quoteVolume: +k.q || 1, trades: +k.n || 1, takerBuyQuote: +k.Q || 0
       };
       
-      // Canlı mum akışında alıcı hızı simülasyonu
       const last = this.candles[this.candles.length - 1];
       if (last) {
         let priceDiff = c.close - last.close;
@@ -461,7 +439,7 @@ class SmartMoneyHybridEngine {
     };
   }
 
-  // 🔴 İNDİKATÖR ETİKETLERİNDE SABİT "ALIŞ" VE "SATIŞ" FİYATLARINI KİLİTLEYEN MOTOR
+  // 🔴 OK İŞARETİNİN ALTINDAKİ FİYATI SADECE "MUMUN AÇILIŞ (GİRİŞ) FİYATINA" SABİTLEYEN KESİNTİSİZ MOTOR
   analyzeHybridFlow() {
     if(this.candles.length < 21) return;
     
@@ -479,8 +457,8 @@ class SmartMoneyHybridEngine {
 
     const prec = this.getPrecision(this.candles[0].close);
 
-    // 1. AŞAMA: Geçmiş mumların taranması ve Alış/Satış fiyatlarının kilitlenmesi
-    for(let i = 20; i < this.candles.length - 1; i++) {
+    // 1. AŞAMA: Tüm mumları tarayıp etiket fiyata sadece "AÇILIŞ (GİRİŞ) FİYATI" basıyoruz (Zorunlu)
+    for(let i = 20; i < this.candles.length; i++) {
       const c = this.candles[i];
       const prev = this.candles[i-1];
       const body = Math.abs(c.close - c.open);
@@ -497,65 +475,28 @@ class SmartMoneyHybridEngine {
       const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
       const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
 
-      let buyKey = `${this.activeSymbol}_B_${c.time}`;
-      let sellKey = `${this.activeSymbol}_S_${c.time}`;
-
       if(isSmartBuy || isBalyozBuy || isDipDonus) {
         this.dipCount++;
         let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
         
-        // 🛠️ İLK OLUŞTUĞU ANKİ ALIŞ (GİRİŞ) FİYATINI HAFIZAYA KİLİTLE
-        if (!this.fixedMarkerPrices[buyKey]) {
-          this.fixedMarkerPrices[buyKey] = c.close; // İlk oluştuğu andaki Alış Fiyatı
+        // 🛠️ BURASI DEĞİŞTİ: `c.close` yerine doğrudan `c.open` (MUMUN GERÇEK İLK BAŞLANGIÇ FİYATI) basılıyor!
+        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${c.open.toFixed(prec)})` });
+        
+        if(i === this.candles.length - 1) {
+          temp = { decision: 'DIP_ALIM', price: c.open, msg: `🟢 BALYOZ ONAYI: Sinyal $${c.open.toFixed(prec)} Alış fiyatında kilitlendi.` };
         }
-        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${this.fixedMarkerPrices[buyKey].toFixed(prec)})` });
       } 
       else if(isSmartSell || isSelaleSell || isTepeDonus) {
         this.tepeCount++;
         let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
         
-        // 🛠️ İLK OLUŞTUĞU ANKİ SATIŞ FİYATINI HAFIZAYA KİLİTLE
-        if (!this.fixedMarkerPrices[sellKey]) {
-          this.fixedMarkerPrices[sellKey] = c.close; // İlk oluştuğu andaki Satış Fiyatı
+        // 🛠️ BURASI DEĞİŞTİ: `c.close` yerine doğrudan `c.open` (MUMUN GERÇEK SATIŞ BAŞLANGIÇ FİYATI) basılıyor!
+        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${c.open.toFixed(prec)})` });
+        
+        if(i === this.candles.length - 1) {
+          temp = { decision: 'TEPE_SATIM', price: c.open, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${c.open.toFixed(prec)} fiyatta kilitlendi.` };
         }
-        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${this.fixedMarkerPrices[sellKey].toFixed(prec)})` });
       }
-    }
-
-    // 2. AŞAMA: EN SON CANLI MUMUN İLK TETİKLENDİĞİ SABİT FİYATA GÖRE ETİKETLENMESİ
-    const last = this.candles[this.candles.length - 1];
-    const lastBody = Math.abs(last.close - last.open);
-    const lastLowWick = Math.min(last.open, last.close) - last.low;
-    const lastUpWick = last.high - Math.max(last.open, last.close);
-
-    let liveBuyKey = `${this.activeSymbol}_buy_live`;
-    let liveSellKey = `${this.activeSymbol}_sell_live`;
-
-    if (last.close >= last.open) {
-      this.dipCount++;
-      let label = (lastLowWick > lastBody * 0.8) ? 'DİP DÖNÜŞÜ' : 'BALYOZ AL';
-      
-      // İlk oluştuğu andaki Alış fiyatını kilitler, canlı fiyata göre asla oynamaz!
-      if (!this.fixedMarkerPrices[liveBuyKey]) {
-        this.fixedMarkerPrices[liveBuyKey] = last.close;
-        delete this.fixedMarkerPrices[liveSellKey];
-      }
-      let finalBuyPrice = this.fixedMarkerPrices[liveBuyKey];
-
-      markers.push({ time: last.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${finalBuyPrice.toFixed(prec)})` });
-      temp = { decision: 'DIP_ALIM', price: finalBuyPrice, stop: last.low * 0.99, msg: `🟢 BALYOZ ONAYI: Sinyal $${finalBuyPrice.toFixed(prec)} Alış fiyatında kilitlendi.` };
-    } else {
-      this.tepeCount++;
-      let label = (lastUpWick > lastBody * 0.8) ? 'TEPE REDDİ' : 'ŞELALE SAT';
-      
-      if (!this.fixedMarkerPrices[liveSellKey]) {
-        this.fixedMarkerPrices[liveSellKey] = last.close;
-        delete this.fixedMarkerPrices[liveBuyKey];
-      }
-      let finalSellPrice = this.fixedMarkerPrices[liveSellKey];
-
-      markers.push({ time: last.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${finalSellPrice.toFixed(prec)})` });
-      temp = { decision: 'TEPE_SATIM', price: finalSellPrice, stop: 0, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${finalSellPrice.toFixed(prec)} fiyatta kilitlendi.` };
     }
 
     this.candleSeries.setMarkers(markers);
@@ -568,25 +509,16 @@ class SmartMoneyHybridEngine {
 
   updateLiveOrderFlowUI() {
     const last = this.candles[this.candles.length - 1];
-    const prec = this.getPrecision(last.close);
-    
-    this.$('uiSidePrice').textContent = `$${this.formatNumber(last.close, prec)}`;
-    const sb = this.$('uiSignalBadge'); const st = this.$('uiSignalText'); const cb = this.$('uiCommentBlock');
+    const cb = this.$('uiCommentBlock');
 
     if(this.lastSignal.decision === 'DIP_ALIM') {
-      sb.className = 'decision-badge bullish'; st.textContent = 'GİRİŞ ONAYLI 🟢'; cb.style.borderLeftColor = 'var(--green)';
-      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "up-text";
-      this.$('uiSideStop').textContent = `$${this.formatNumber(this.lastSignal.stop, prec)}`; this.$('uiSideStop').className = "down-text";
+      cb.style.borderLeftColor = 'var(--green)';
       this.$('uiTrendStatus').textContent = "YÜKSELİŞ (BALYOZ)"; this.$('uiTrendStatus').className = "up-text";
     } else if(this.lastSignal.decision === 'TEPE_SATIM') {
-      sb.className = 'decision-badge bearish'; st.textContent = 'ACİL ÇIKIŞ 🔴'; cb.style.borderLeftColor = 'var(--red)';
-      this.$('uiSideTarget').textContent = `$${this.formatNumber(this.lastSignal.price, prec)}`; this.$('uiSideTarget').className = "down-text";
-      this.$('uiSideStop').textContent = 'NAKİT ZIRHI'; this.$('uiSideStop').className = "";
+      cb.style.borderLeftColor = 'var(--red)';
       this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
     } else {
-      sb.className = 'decision-badge neutral'; st.textContent = 'İZLEME MODU ⏳'; cb.style.borderLeftColor = 'var(--blue)';
-      this.$('uiSideTarget').textContent = 'FIRSAT BEKLENİYOR'; this.$('uiSideTarget').className = "";
-      this.$('uiSideStop').textContent = '-'; this.$('uiSideStop').className = "";
+      cb.style.borderLeftColor = 'var(--blue)';
       this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
     }
 
@@ -605,7 +537,7 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
-  // 🤖 YAPAY ZEKA MİLİMETRİK SON DURUM ANALİZÖRÜ (İstendiğinde Çalışır)
+  // 🤖 YAPAY ZEKA SADECE SON DURUM PARAMETRELERİNİ YORUMLAR (Donma Yapmaz)
   processAIAnalysis() {
     if (this.userTier !== 'Premium Üye' && this.userLimits <= 0) {
       document.getElementById('upgradeModal').style.display = 'flex';
@@ -622,21 +554,18 @@ class SmartMoneyHybridEngine {
 
     const buyPct = this.$('uiFlowBuyPct').textContent;
     const lastSig = this.$('uiTrendStatus').textContent;
-    const activePrice = this.$('uiSidePrice').textContent;
 
-    // En son hacim, lot giriş çıkış verilerine göre tek seferlik özet rapor
     setTimeout(() => {
       let reportText = `
         <strong>🤖 Groq AI Son Durum Analiz Raporu (${this.activeSymbol}):</strong><br/>
-        • <b>Anlık Fiyat Yapısı:</b> Parite şu an ${activePrice} seviyesinde işlem görüyor.<br/>
-        • <b>Lot Giriş/Çıkış Dengesi:</b> Alıcı lot hakimiyeti %${buyPct} seviyesinde kararlı duruş sergiliyor.<br/>
-        • <b>Son Algoritmik Durum:</b> Terminal sinyal motorumuzda en son <b>${lastSig}</b> onaylanmıştır. Alış/Satış fiyat kilitleri panelle senkronize edilmiştir. Güvenli ticaret limitlerine sadık kalınmalıdır.
+        • <b>Canlı Lot Hakimiyeti:</b> Alıcı emir yoğunluğu %${buyPct} seviyesinde hareket etmektedir.<br/>
+        • <b>Son Algoritmik Durum:</b> Terminal sinyal motorumuzda en son <b>${lastSig}</b> onaylanmıştır. Belirlenen kilit Alış/Satış baremlerine göre pozisyonlar takip edilmelidir.
       `;
       resBox.innerHTML = reportText;
     }, 1200);
   }
 
-  // 🚀 KODDAKİ "isBalyozBuy" SİSTEMİNİ DOĞRUDAN OKUYAN KUSURSUZ ROBOT TARAMA MOTORU (BURASI TAMAMEN YENİLENDİ)
+  // 🚀 KODDAKİ "isBalyozBuy" FORMÜLÜNÜ BİREBİR OKUYAN ROBOT TARAMA MOTORU
   async runBalyozScanner(isAutoBackground = false) {
     let listEl;
     if (isAutoBackground) {
@@ -646,7 +575,6 @@ class SmartMoneyHybridEngine {
       listEl.innerHTML = `<div class="text-center py-12 text-xs text-muted"><i class="fa-solid fa-sync animate-spin mr-2"></i>Koddaki Balyoz Formasyonu Taranıyor...</div>`;
     }
 
-    // Taramaya alınacak en popüler pariteler
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
     let scanResults = [];
 
@@ -655,16 +583,13 @@ class SmartMoneyHybridEngine {
         const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=4h&limit=40`);
         const candles = d.map(k => ({ open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]), volume: parseFloat(k[5]) }));
         
-        // Son canlı mum ve bir önceki mum verileri
         const lastCandle = candles[candles.length - 1];
         const prevCandle = candles[candles.length - 2];
 
-        // Gövde boyutu hesaplaması (Senin kodundaki orijinal isBalyozBuy kuralı)
         const body = Math.abs(lastCandle.close - lastCandle.open);
         const prevBody = Math.abs(prevCandle.close - prevCandle.open);
 
-        // 🌟 SENİN ORİJİNAL KODUNDAKİ BALYOZ AL KURALININ BİREBİR AYNISI:
-        // Şimdiki mum yeşil, önceki mum kırmızı ve şimdiki gövde önceki gövdeyi en az 1.35 kat yutmuş olacak!
+        // KODUN İÇİNDEKİ ORİJİNAL BALYOZ FORMÜLÜNÜN BİREBİR AYNISI
         const isBalyozBuyFormed = lastCandle.close > lastCandle.open && prevCandle.close < prevCandle.open && body > prevBody * 1.35;
 
         if (isBalyozBuyFormed) {
@@ -673,7 +598,7 @@ class SmartMoneyHybridEngine {
             symbol: coin,
             price: lastCandle.close,
             change: changePercent,
-            balyozPrice: lastCandle.close // Sinyalin oluştuğu sabit Alış fiyatı
+            balyozPrice: lastCandle.open // Sinyalin patladığı andaki GERÇEK MUMA AİT AÇILIŞ FİYATI
           });
         }
       } catch (e) {
@@ -681,9 +606,7 @@ class SmartMoneyHybridEngine {
       }
     }
 
-    // Arayüzlere Çıktı Verme
     if (isAutoBackground) {
-      // SAĞDAKİ CANLI OTO RADAR HAVUZU
       if (scanResults.length === 0) {
         listEl.innerHTML = `<div class="text-center py-4 text-[10px] text-slate-500"><i class="fa-solid fa-spinner animate-spin"></i> Aktif BALYOZ AL formasyonu aranıyor...</div>`;
       } else {
@@ -696,13 +619,13 @@ class SmartMoneyHybridEngine {
         `).join('');
       }
     } else {
-      // SOLDALİ MANUEL TARA LİSTESİ
       if (scanResults.length === 0) {
         listEl.innerHTML = `<div class="text-center py-10 text-xs text-amber-500"><i class="fa-solid fa-circle-exclamation mr-2"></i>Şu an hiçbir coinde BALYOZ AL formasyonu oluşmadı.</div>`;
       } else {
+        scanResults.sort((a, b) => b.balyozPrice - a.balyozPrice);
         listEl.innerHTML = scanResults.map(s => `
           <div class="coin-item-row ${s.symbol===this.activeSymbol?'active':''}" data-symbol="${s.symbol}">
-            <div class="coin-name-cell">🔶 ${s.symbol}<br/><span style="font-size:8px; color: var(--green);">BALYOZ ONAYLI</span></div>
+            <div class="coin-name-cell">🚀 ${s.symbol}<br/><span style="font-size:8px; color: var(--green);">BALYOZ ONAYLI</span></div>
             <div class="coin-price-cell">$${this.formatNumber(s.price, this.getPrecision(s.price))}<br/><span style="font-size:8px; color: var(--yellow);">Alış: $${s.balyozPrice.toLocaleString('en-US')}</span></div>
             <div class="coin-change-cell ${s.change>=0?'up-text':'down-text'}">${s.change>=0?'+':''}${s.change.toFixed(2)}%</div>
           </div>
