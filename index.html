@@ -77,7 +77,7 @@
     .flow-bar-sell { background: var(--red); height: 100%; transition: width 0.3s; }
     
     .grid-metrics-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .sub-metric-box { background: var(--panel2); border: 1px solid var(--line); padding: 12px; border-radius: 6px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+    .sub-metric-box { background: var(--panel2); border: 1px solid var(--line); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; }
     .sub-metric-box label { font-size: 9px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
     .sub-metric-box b { font-size: 13px; color: #fff; font-weight: 800; }
     .sub-metric-box span { font-size: 10px; color: var(--muted); }
@@ -202,8 +202,8 @@ class SmartMoneyHybridEngine {
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
     
-    // 🛠️ FİYATI İLK ANINDA ÇAKIP KİLİTLEYEN YENİ HAFIZA BLOĞU
-    this.fixedSignalPrices = {}; 
+    // Fiyat kilitleme hafıza nesnesi
+    this.signalHistoryStore = {}; 
     
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Piyasa dönüş noktaları ve hacim verileri aranıyor...' };
     
@@ -260,7 +260,7 @@ class SmartMoneyHybridEngine {
     this.$('coinScrollList').addEventListener('click', (e) => {
       const row = e.target.closest('.coin-item-row'); if(!row) return;
       this.activeSymbol = row.dataset.symbol;
-      this.fixedSignalPrices = {}; // Parite değişince fiyat kilidini sıfırla
+      this.signalHistoryStore = {}; // Parite değişince fiyat kilidini sıfırla
       const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
       this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
       document.querySelectorAll('.coin-item-row').forEach(r=>r.classList.remove('active')); row.classList.add('active');
@@ -357,7 +357,7 @@ class SmartMoneyHybridEngine {
 
     const prec = this.getPrecision(this.candles[0].close);
 
-    // 🛠️ TÜM DÖNGÜYÜ EN SON CANLI MUMU DA KAP SAYACAK ŞEKİLDE i < length YAPTIK
+    // 🛠️ DÖNGÜYÜ SON CANLI MUM DA DAHİL OLACAK ŞEKİLDE ÇALIŞTIRAN FORMÜL (i < length)
     for(let i = 20; i < this.candles.length; i++) {
       const c = this.candles[i];
       const prev = this.candles[i-1];
@@ -380,18 +380,18 @@ class SmartMoneyHybridEngine {
       const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
       const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
 
-      let keyB = `B_${c.time}`;
-      let keyS = `S_${c.time}`;
+      let keyB = `buy_${c.time}`;
+      let keyS = `sell_${c.time}`;
 
       if(isSmartBuy || isBalyozBuy || isDipDonus) {
         this.dipCount++;
         let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
         
-        // 🛠️ İLK OLUŞTUĞU ANKİ FİYATI ETİKETE ÇAKMA VE SABİTLEME
-        if (!this.fixedSignalPrices[keyB]) {
-          this.fixedSignalPrices[keyB] = c.close;
+        // 🛠️ SİNYALİN MUM ÜSTÜNDE İLK BELİRDİĞİ ANDAKİ FİYATI KİLİTLE VE SABİTLE
+        if (!this.signalHistoryStore[keyB]) {
+          this.signalHistoryStore[keyB] = c.close;
         }
-        let fixedPrice = this.fixedSignalPrices[keyB];
+        let fixedPrice = this.signalHistoryStore[keyB];
         
         markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} ($${fixedPrice.toFixed(prec)})` });
         
@@ -403,11 +403,11 @@ class SmartMoneyHybridEngine {
         this.tepeCount++;
         let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
         
-        // 🛠️ İLK OLUŞTUĞU ANKİ FİYATI ETİKETE ÇAKMA VE SABİTLEME
-        if (!this.fixedSignalPrices[keyS]) {
-          this.fixedSignalPrices[keyS] = c.close;
+        // 🛠️ SİNYALİN MUM ÜSTÜNDE İLK BELİRDİĞİ ANDAKİ FİYATI KİLİTLE VE SABİTLE
+        if (!this.signalHistoryStore[keyS]) {
+          this.signalHistoryStore[keyS] = c.close;
         }
-        let fixedPrice = this.fixedSignalPrices[keyS];
+        let fixedPrice = this.signalHistoryStore[keyS];
 
         markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} ($${fixedPrice.toFixed(prec)})` });
         
