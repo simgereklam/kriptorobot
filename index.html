@@ -218,7 +218,7 @@ class SmartMoneyHybridEngine {
     this.TELEGRAM_BOT_TOKEN = ""; 
     this.TELEGRAM_CHAT_ID = "";
     this.notifiedCoins = {}; 
-    this.activeSymbolNotifiedTime = 0; // Seçili paritedeki son tehlike alarmı kilidi
+    this.activeSymbolNotifiedTime = 0; 
 
     this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
@@ -226,9 +226,10 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
     
-    this.fixedSignalPrices = {}; 
-    this.audioCtx = null;
+    // 🛠️ PINE SCRIPT TEK ETİKET BELLEĞİ (Hafızada sadece 1 adet kilitli sinyal saklar)
+    this.lastActiveLabel = null; 
 
+    this.audioCtx = null;
     this.init();
   }
 
@@ -327,10 +328,10 @@ class SmartMoneyHybridEngine {
 
   selectAndLoadCoin(symbol) {
     this.activeSymbol = symbol;
-    this.fixedSignalPrices = {}; 
-    this.activeSymbolNotifiedTime = 0; // Yeni coine geçince canlı alarm kilidini sıfırla
+    this.lastActiveLabel = null; // Sıfırla
+    this.activeSymbolNotifiedTime = 0; 
     const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
-    this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
+    this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>activeTfText</span>`;
     
     document.querySelectorAll('.coin-item-row').forEach(r => {
       if(r.dataset.symbol === symbol) r.classList.add('active');
@@ -420,88 +421,86 @@ class SmartMoneyHybridEngine {
     };
   }
 
+  // 🛠️ PINE SCRIPT WILLIAMS FRAKTAL VE TEK ETİKET MOTORU (TAM SENİN KODUNUN MANTIĞI!)
   analyzeHybridFlow() {
-    if(this.candles.length < 21) return;
+    if(this.candles.length < 5) return;
     
-    let totalWhaleSize = 0;
-    let totalMarketVol = 0;
-    for(let i = this.candles.length - 21; i < this.candles.length - 1; i++) {
-      totalWhaleSize += (this.candles[i].quoteVolume / (this.candles[i].trades || 1));
-      totalMarketVol += this.candles[i].volume;
-    }
-    const avgWhaleSize = totalWhaleSize / 20;
-    const avgMarketVol = totalMarketVol / 20;
-
-    let markers = []; this.dipCount = 0; this.tepeCount = 0;
+    let markers = []; 
+    this.dipCount = 0; this.tepeCount = 0;
     let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ İzleme aktif.' };
-
     const prec = this.getPrecision(this.candles[0].close);
 
-    for(let i = 20; i < this.candles.length; i++) {
+    // Tüm döngüyü en güncel mum dahil taratıyoruz (Pine Script Erken Sinyal Mekanizması)
+    for(let i = 4; i < this.candles.length; i++) {
       const c = this.candles[i];
-      const prev = this.candles[i-1];
-      const body = Math.abs(c.close - c.open);
-      const prevBody = Math.abs(prev.close - prev.open);
-      const lowWick = Math.min(c.open, c.close) - c.low;
-      const upWick = c.high - Math.max(c.open, c.close);
-      const currentWhaleSize = c.quoteVolume / (c.trades || 1);
-      const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
       
-      const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
-      const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
-      const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
-      const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
-      const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
-      const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
+      // 🛠️ PINE SCRIPT'TEKİ 5 MUMLUK KLASİK WILLIAMS FRAKTAL TANIMI
+      // fractalTop = high[2] < high[1] and high[1] > high and high[1] > high[3] and high[3] < high[4]
+      const fractalTop = this.candles[i-2].high < this.candles[i-1].high && 
+                         this.candles[i-1].high > this.candles[i].high && 
+                         this.candles[i-1].high > this.candles[i-3].high && 
+                         this.candles[i-3].high < this.candles[i-4].high;
 
-      let keyB = `B_${c.time}`;
-      let keyS = `S_${c.time}`;
+      // fractalBottom = low[2] > low[1] and low[1] < low and low[1] < low[3] and low[3] > low[4]
+      const fractalBottom = this.candles[i-2].low > this.candles[i-1].low && 
+                            this.candles[i-1].low < this.candles[i].low && 
+                            this.candles[i-1].low < this.candles[i-3].low && 
+                            this.candles[i-3].low > this.candles[i-4].low;
 
-      if(isSmartBuy || isBalyozBuy || isDipDonus) {
-        this.dipCount++;
-        let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
+      // 🛠️ KIRILMA ÖNCESİ ERKEN SİNYAL KOŞULLARI (earlyBuy ve earlySell)
+      const earlyBuy = this.candles[i].low < this.candles[i-1].low && 
+                       this.candles[i-1].low < this.candles[i-2].low && !fractalBottom;
+                       
+      const earlySell = this.candles[i].high > this.candles[i-1].high && 
+                        this.candles[i-1].high > this.candles[i-2].high && !fractalTop;
+
+      if (earlyBuy) {
+        this.dipCount = 1; this.tepeCount = 0;
+        // Hafızadaki tekil etiketi güncelle (Öncekileri label.delete mantığıyla eziyoruz)
+        this.lastActiveLabel = {
+          time: c.time,
+          position: 'belowBar',
+          color: '#00f5d4',
+          shape: 'arrowUp',
+          text: `DİP GİRİŞ AL\n$${c.low.toFixed(prec)}` // Fiyatı mumun en düşüğüne çivileyip sabitledik!
+        };
         
-        if (!this.fixedSignalPrices[keyB]) {
-          this.fixedSignalPrices[keyB] = c.open;
-        }
-        let fixedPrice = this.fixedSignalPrices[keyB];
-        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} ($${fixedPrice.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: fixedPrice, msg: `🟢 BALYOZ ONAYI: Sinyal $${fixedPrice.toFixed(prec)} Alış fiyatında kilitlendi.` };
+        if (i === this.candles.length - 1) {
+          temp = { decision: 'DIP_ALIM', price: c.low };
         }
       } 
-      else if(isSmartSell || isSelaleSell || isTepeDonus) {
-        this.tepeCount++;
-        let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
+      else if (earlySell) {
+        this.tepeCount = 1; this.dipCount = 0;
+        // Hafızadaki tekil etiketi güncelle (Öncekileri label.delete mantığıyla eziyoruz)
+        this.lastActiveLabel = {
+          time: c.time,
+          position: 'aboveBar',
+          color: '#ff0054',
+          shape: 'arrowDown',
+          text: `TEPE ÇIKIŞ SAT\n$${c.high.toFixed(prec)}` // Fiyatı mumun en yükseğine çivileyip sabitledik!
+        };
         
-        if (!this.fixedSignalPrices[keyS]) {
-          this.fixedSignalPrices[keyS] = c.open;
-        }
-        let fixedPrice = this.fixedSignalPrices[keyS];
-        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${fixedPrice.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: fixedPrice, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${fixedPrice.toFixed(prec)} fiyatta kilitlendi.` };
+        if (i === this.candles.length - 1) {
+          temp = { decision: 'TEPE_SATIM', price: c.high };
           
-          // 🛠️ HARİCİ CANLI SEÇİLİ PARİTE ALARMI: Eğer açık olan paritede TEPE REDDİ veya ŞELALE başladıysa harici alarm öttür
+          // Canlı grafikteki acil harici koruma alarm tetikleyicisi
           if (this.activeSymbolNotifiedTime !== c.time) {
             this.activeSymbolNotifiedTime = c.time;
-            
-            // Harici kalın tehlike sinyali çal (3 kez kesikli kesikli)
             this.playAlarmSound(440, 'triangle', 0.2);
             setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
-            setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 600);
-
-            // Telegram'a acil çıkış uyarısı fırlat
-            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI (GRAFİKTEKİ HİSSE)</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Balinalar satışa başladı! Mumda TEPE REDDİ / İĞNE oluştu.\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}\n\n⚠️ Dikkat: Canlı takip ettiğiniz paritede düşüş tetiklendi, kar al veya nakite geç zırhını çalıştır!`);
+            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Williams Erken Tepe Sinyali Geldi!\n<b>Tepe Fiyatı:</b> $${c.high.toFixed(prec)}\n\n⚠️ Dikkat: Canlı paritede düşüş tetiklendi, kâr al bölgesine ulaşıldı!`);
           }
         }
       }
     }
 
+    // 🛠️ GRAFİĞE SADECE VE SADECE 1 ADET ETİKET GÖNDERİLİYOR (ÇOKLU ETİKET VE BİNME BİTTİ!)
+    if (this.lastActiveLabel) {
+      markers.push(this.lastActiveLabel);
+    }
+
     this.candleSeries.setMarkers(markers);
-    this.$('uiDipCount').textContent = this.dipCount; 
+    this.$('uiDipCount').textContent = this.dipCount;  
     this.$('uiTepeCount').textContent = this.tepeCount;
     
     this.lastSignal = temp;
