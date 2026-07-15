@@ -213,12 +213,13 @@
 <script>
 class SmartMoneyHybridEngine {
   constructor() {
+    // TELEGRAM ENTEGRASYON AYARLARI
     this.TELEGRAM_BOT_TOKEN = ""; 
     this.TELEGRAM_CHAT_ID = "";
     this.notifiedCoins = {}; 
     this.activeSymbolNotifiedTime = 0; 
 
-    // PINE V22 KULLANICI PARAMETRELERİ (FİLTRELER BİREBİR)
+    // PINE V22 KULLANICI PARAMETRELERİ (TARAMA MOTORU İÇİN)
     this.TEPE_GERI_CEKILME = 1.0; 
     this.DIP_TEPKI_ORANI = 1.0;   
 
@@ -228,7 +229,7 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0 };
     
-    // Pine Script Tek Canlı Etiket Tutucu (Mükerrer ve üst üste binmeyi bitirir)
+    // Pine Script label.delete mantığı için tekil etiket kilit hafızası
     this.lastActiveLabel = null; 
     this.fixedSignalPrices = {};
 
@@ -425,66 +426,56 @@ class SmartMoneyHybridEngine {
     };
   }
 
-  // 🛠️ %100 SAF V22 CANLI İĞNE MOTORU (FRAKTAL KALINTILARININ HEPSİ YOK EDİLDİ)
+  // 🛠️ ETİKET DÖNGÜSÜ TAMAMEN BAĞIMSIZ HALE GETİRİLDİ (PINE SCRIPT ETİKET REFORMU)
   analyzeHybridFlow() {
-    if(this.candles.length < 6) return;
+    if(this.candles.length < 3) return;
     
     let markers = []; 
     this.dipCount = 0; this.tepeCount = 0;
-    this.lastActiveLabel = null; // Eski çizimleri tamamen sıfırla
+    this.lastActiveLabel = null; // Öncekileri hafızadan label.delete mantığıyla siler
     let temp = { decision: 'IZLEME', price: 0, stop: 0 };
     const prec = this.getPrecision(this.candles[0].close);
 
-    let totalVol5 = 0;
-    for(let j = this.candles.length - 6; j < this.candles.length - 1; j++) { totalVol5 += this.candles[j].volume; }
-    const hacimOrtalamasi = totalVol5 / 5;
+    // 🚀 GRAFİK ETİKET SİSTEMİ: Ağır tarayıcı filtrelerinden tamamen bağımsız, saf iğne yönünü izler!
+    for(let i = 2; i < this.candles.length; i++) {
+      const c = this.candles[i];
+      const prev = this.candles[i-1];
 
-    // 🚀 Sadece ve sadece en güncel mum verisine göre tek etiket hesaplanır (Fraktal döngüsü bitti)
-    const c = this.candles[this.candles.length - 1];
-    const prev = this.candles[this.candles.length - 2];
+      // earlyBuy = low < low[1] and low[1] < low[2]
+      const earlyBuy = c.low < prev.low;
+      // earlySell = high > high[1] and high[1] > high[2]
+      const earlySell = c.high > prev.high;
 
-    const candleRange = c.high - c.low;
-    const saticiBaskisi = candleRange > 0 ? ((c.high - Math.max(c.open, c.close)) / candleRange * 100) : 0;
-    const aliciBaskisi = candleRange > 0 ? ((Math.min(c.open, c.close) - c.low) / candleRange * 100) : 0;
+      if (earlyBuy && (c.close >= c.open)) {
+        this.dipCount = 1; this.tepeCount = 0;
+        if (!this.fixedSignalPrices[`B_${c.time}`]) { this.fixedSignalPrices[`B_${c.time}`] = c.low; }
+        let fixedPrice = this.fixedSignalPrices[`B_${c.time}`];
 
-    const anlikTepeGeriCekilme = c.high > 0 ? ((c.high - c.close) / c.high) * 100 : 0;
-    const canliTepeSinyali = c.high > prev.high && anlikTepeGeriCekilme >= this.TEPE_GERI_CEKILME;
+        this.lastActiveLabel = {
+          time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
+          text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}` // Fiyatı mumun en düşüğüne çakıp kilitler
+        };
+        if (i === this.candles.length - 1) { temp = { decision: 'DIP_ALIM', price: fixedPrice }; }
+      } 
+      else if (earlySell && (c.close <= c.open)) {
+        this.tepeCount = 1; this.dipCount = 0;
+        if (!this.fixedSignalPrices[`S_${c.time}`]) { this.fixedSignalPrices[`S_${c.time}`] = c.high; }
+        let fixedPrice = this.fixedSignalPrices[`S_${c.time}`];
 
-    const anlikDiptenTepki = c.low > 0 ? ((c.close - c.low) / c.low) * 100 : 0;
-    const canliDipSinyali_Temel = c.low < prev.low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI;
-    
-    // Saf İğne ve Hacim İvmesi Koşulu
-    const canliDipSinyali = canliDipSinyali_Temel && (c.volume > hacimOrtalamasi * 0.7) && aliciBaskisi > saticiBaskisi;
-
-    if (canliDipSinyali) {
-      this.dipCount = 1; this.tepeCount = 0;
-      if (!this.fixedSignalPrices[`B_${c.time}`]) { this.fixedSignalPrices[`B_${c.time}`] = c.low; }
-      let fixedPrice = this.fixedSignalPrices[`B_${c.time}`];
-
-      // Pine Script label.delete mantığıyla tekil güncel etiket mumun en düşüğüne (low) yapışır
-      this.lastActiveLabel = {
-        time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
-        text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}`
-      };
-      temp = { decision: 'DIP_ALIM', price: fixedPrice };
-    } 
-    else if (canliTepeSinyali) {
-      this.tepeCount = 1; this.dipCount = 0;
-      if (!this.fixedSignalPrices[`S_${c.time}`]) { this.fixedSignalPrices[`S_${c.time}`] = c.high; }
-      let fixedPrice = this.fixedSignalPrices[`S_${c.time}`];
-
-      // Tekil güncel etiket mumun en yükseğine (high) yapışır
-      this.lastActiveLabel = {
-        time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
-        text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}`
-      };
-      temp = { decision: 'TEPE_SATIM', price: fixedPrice };
-      
-      if (this.activeSymbolNotifiedTime !== c.time) {
-        this.activeSymbolNotifiedTime = c.time;
-        this.playAlarmSound(440, 'triangle', 0.2);
-        setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
-        this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Canlı paritede TEPE REDDİ fitili onaylandı!\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}`);
+        this.lastActiveLabel = {
+          time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
+          text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}` // Fiyatı mumun en yükseğine çakıp kilitler
+        };
+        if (i === this.candles.length - 1) {
+          temp = { decision: 'TEPE_SATIM', price: fixedPrice };
+          
+          if (this.activeSymbolNotifiedTime !== c.time) {
+            this.activeSymbolNotifiedTime = c.time;
+            this.playAlarmSound(440, 'triangle', 0.2);
+            setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
+            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Grafikte takip edilen paritede TEPE REDDİ fitili onaylandı!\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}`);
+          }
+        }
       }
     }
 
@@ -530,7 +521,7 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
-  // 🚀 RADAR SENKRONİZASYONU: ARTIK TARAMA SİSTEMİ DE %100 SAF İĞNE FORMÜLÜNE BAĞLI ÇALIŞIYOR
+  // 🚀 SENKRONİZE RADAR: SADECE BU BAĞIMSIZ TARAMA MOTORU AĞIR V22 BÖLGESEL İĞNE FORMÜLLERİNİ VE BALİNA GİRİŞLERİNİ SÜZER!
   async runBalyozScanner(isAutoBackground = false) {
     let listEl = this.$('uiRadarPool');
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
@@ -556,7 +547,7 @@ class SmartMoneyHybridEngine {
 
         const anlikDiptenTepki = c_low > 0 ? ((c_close - c_low) / c_low) * 100 : 0;
         
-        // Tamamen temizlenmiş saf iğne tarama filtresi
+        // Ağır V22 kurumsal balina filtresi (Hisse bulup listeye atan bağımsız döngü)
         const isDipRejectionFormed = c_low < p_low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI && (c_vol > avgV5 * 0.7) && aliciBaskisi > saticiBaskisi;
 
         if (isDipRejectionFormed) {
