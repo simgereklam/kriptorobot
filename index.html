@@ -6,7 +6,6 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
-  <!-- FontAwesome Icons for UI -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -106,7 +105,7 @@
     </div>
     <div class="search-container">
       <input id="pariteSearch" class="input-dark" placeholder="Sembol ara... (Örn: BTC)" />
-      <button class="btn-scanner-trigger" id="btnRunScanner" title="Hızlı Balyoz Taraması"><i class="fa-solid fa-sync"></i> TARA</button>
+      <button class="btn-scanner-trigger" id="btnRunScanner" title="Hızlı İğne Taraması"><i class="fa-solid fa-sync"></i> TARA</button>
     </div>
     <div class="filter-tabs">
       <button class="tab-trigger active" id="tab-USDT">USDT</button>
@@ -146,24 +145,24 @@
     </div>
     <div class="bottom-info-bar">
       <div>ZIRH: <span class="up-text">Balina + Şelale + Trend Dönüş (Rejection) Aktif</span></div>
-      <div>ALIM (DİP/BALYOZ): <b id="uiDipCount">0</b></div>
-      <div>SATIM (TEPE/ŞELALE): <b id="uiTepeCount">0</b></div>
+      <div>ALIM (DİP/İĞNE): <b id="uiDipCount">0</b></div>
+      <div>SATIM (TEPE/REDDEDİLME): <b id="uiTepeCount">0</b></div>
     </div>
   </main>
 
   <aside class="panel-card right-sidebar">
     <div class="sidebar-title-area">
-      <h3>🚨 BALYOZ RADAR TERMİNALİ</h3>
+      <h3>🚨 İĞNE & BALİNA RADAR TERMİNALİ</h3>
     </div>
     <div class="sidebar-scrollable-content">
       
       <div class="signal-card-block radar-pool-block">
         <div class="badge-row" style="margin-bottom: 2px;">
-          <div class="block-label" style="color: var(--green); font-weight: 900;"><i class="fa-solid fa-satellite-dish animate-pulse"></i> CANLI RADAR HAVUZU</div>
+          <div class="block-label" style="color: var(--green); font-weight: 900;"><i class="fa-solid fa-satellite-dish animate-pulse"></i> CANLI İĞNE HAVUZU</div>
           <span class="text-[9px] text-gray-500">5s Canlı</span>
         </div>
         <div class="radar-pool-list" id="uiRadarPool">
-          <div class="text-center py-4 text-xs text-slate-500">Balyoz taraması yapılıyor...</div>
+          <div class="text-center py-4 text-xs text-slate-500">İğne avcısı tarama yapıyor...</div>
         </div>
       </div>
 
@@ -220,16 +219,19 @@ class SmartMoneyHybridEngine {
     this.notifiedCoins = {}; 
     this.activeSymbolNotifiedTime = 0; 
 
+    // PINE V22 KULLANICI AYARLARI
+    this.TEPE_GERI_CEKILME = 1.0; 
+    this.DIP_TEPKI_ORANI = 1.0;   
+
     this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
     
-    // 🛠️ PINE SCRIPT TEK ETİKET BELLEĞİ (Hafızada sadece 1 adet kilitli sinyal saklar)
     this.lastActiveLabel = null; 
-
     this.audioCtx = null;
+
     this.init();
   }
 
@@ -243,6 +245,7 @@ class SmartMoneyHybridEngine {
     await this.loadTickers();
     await this.loadCandles();
     
+    // 🚀 RADAR ARTIK YÜZDE YÜZ V22 İĞNE ALGORİTMASIYLA 5 SANİYEDE BİR ÇALIŞIYOR
     this.runBalyozScanner(true);
     setInterval(() => this.runBalyozScanner(true), 5000); 
     setInterval(() => this.loadTickers(), 45000);
@@ -328,10 +331,10 @@ class SmartMoneyHybridEngine {
 
   selectAndLoadCoin(symbol) {
     this.activeSymbol = symbol;
-    this.lastActiveLabel = null; // Sıfırla
+    this.lastActiveLabel = null; 
     this.activeSymbolNotifiedTime = 0; 
     const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
-    this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>activeTfText</span>`;
+    this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
     
     document.querySelectorAll('.coin-item-row').forEach(r => {
       if(r.dataset.symbol === symbol) r.classList.add('active');
@@ -421,88 +424,70 @@ class SmartMoneyHybridEngine {
     };
   }
 
-  // 🛠️ PINE SCRIPT WILLIAMS FRAKTAL VE TEK ETİKET MOTORU (TAM SENİN KODUNUN MANTIĞI!)
   analyzeHybridFlow() {
-    if(this.candles.length < 5) return;
+    if(this.candles.length < 6) return;
     
     let markers = []; 
     this.dipCount = 0; this.tepeCount = 0;
     let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ İzleme aktif.' };
     const prec = this.getPrecision(this.candles[0].close);
 
-    // Tüm döngüyü en güncel mum dahil taratıyoruz (Pine Script Erken Sinyal Mekanizması)
-    for(let i = 4; i < this.candles.length; i++) {
+    let totalVol5 = 0;
+    for(let j = this.candles.length - 6; j < this.candles.length - 1; j++) { totalVol5 += this.candles[j].volume; }
+    const hacimOrtalamasi = totalVol5 / 5;
+
+    for(let i = 5; i < this.candles.length; i++) {
       const c = this.candles[i];
-      
-      // 🛠️ PINE SCRIPT'TEKİ 5 MUMLUK KLASİK WILLIAMS FRAKTAL TANIMI
-      // fractalTop = high[2] < high[1] and high[1] > high and high[1] > high[3] and high[3] < high[4]
-      const fractalTop = this.candles[i-2].high < this.candles[i-1].high && 
-                         this.candles[i-1].high > this.candles[i].high && 
-                         this.candles[i-1].high > this.candles[i-3].high && 
-                         this.candles[i-3].high < this.candles[i-4].high;
+      const prev = this.candles[i-1];
 
-      // fractalBottom = low[2] > low[1] and low[1] < low and low[1] < low[3] and low[3] > low[4]
-      const fractalBottom = this.candles[i-2].low > this.candles[i-1].low && 
-                            this.candles[i-1].low < this.candles[i].low && 
-                            this.candles[i-1].low < this.candles[i-3].low && 
-                            this.candles[i-3].low > this.candles[i-4].low;
+      const candleRange = c.high - c.low;
+      const saticiBaskisi = candleRange > 0 ? ((c.high - Math.max(c.open, c.close)) / candleRange * 100) : 0;
+      const aliciBaskisi = candleRange > 0 ? ((Math.min(c.open, c.close) - c.low) / candleRange * 100) : 0;
 
-      // 🛠️ KIRILMA ÖNCESİ ERKEN SİNYAL KOŞULLARI (earlyBuy ve earlySell)
-      const earlyBuy = this.candles[i].low < this.candles[i-1].low && 
-                       this.candles[i-1].low < this.candles[i-2].low && !fractalBottom;
-                       
-      const earlySell = this.candles[i].high > this.candles[i-1].high && 
-                        this.candles[i-1].high > this.candles[i-2].high && !fractalTop;
+      const anlikTepeGeriCekilme = c.high > 0 ? ((c.high - c.close) / c.high) * 100 : 0;
+      const canliTepeSinyali = c.high > prev.high && anlikTepeGeriCekilme >= this.TEPE_GERI_CEKILME;
 
-      if (earlyBuy) {
+      const anlikDiptenTepki = c.low > 0 ? ((c.close - c.low) / c.low) * 100 : 0;
+      const canliDipSinyali_Temel = c.low < prev.low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI;
+      const canliDipSinyali = canliDipSinyali_Temel && (c.volume > hacimOrtalamasi * 0.8) && aliciBaskisi > saticiBaskisi;
+
+      if (canliDipSinyali) {
         this.dipCount = 1; this.tepeCount = 0;
-        // Hafızadaki tekil etiketi güncelle (Öncekileri label.delete mantığıyla eziyoruz)
+        if (!this.fixedSignalPrices[`B_${c.time}`]) { this.fixedSignalPrices[`B_${c.time}`] = c.low; }
+        let fixedPrice = this.fixedSignalPrices[`B_${c.time}`];
+
         this.lastActiveLabel = {
-          time: c.time,
-          position: 'belowBar',
-          color: '#00f5d4',
-          shape: 'arrowUp',
-          text: `DİP GİRİŞ AL\n$${c.low.toFixed(prec)}` // Fiyatı mumun en düşüğüne çivileyip sabitledik!
+          time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
+          text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}`
         };
-        
-        if (i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: c.low };
-        }
+        if (i === this.candles.length - 1) { temp = { decision: 'DIP_ALIM', price: fixedPrice }; }
       } 
-      else if (earlySell) {
+      else if (canliTepeSinyali) {
         this.tepeCount = 1; this.dipCount = 0;
-        // Hafızadaki tekil etiketi güncelle (Öncekileri label.delete mantığıyla eziyoruz)
+        if (!this.fixedSignalPrices[`S_${c.time}`]) { this.fixedSignalPrices[`S_${c.time}`] = c.high; }
+        let fixedPrice = this.fixedSignalPrices[`S_${c.time}`];
+
         this.lastActiveLabel = {
-          time: c.time,
-          position: 'aboveBar',
-          color: '#ff0054',
-          shape: 'arrowDown',
-          text: `TEPE ÇIKIŞ SAT\n$${c.high.toFixed(prec)}` // Fiyatı mumun en yükseğine çivileyip sabitledik!
+          time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
+          text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}`
         };
-        
         if (i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: c.high };
+          temp = { decision: 'TEPE_SATIM', price: fixedPrice };
           
-          // Canlı grafikteki acil harici koruma alarm tetikleyicisi
           if (this.activeSymbolNotifiedTime !== c.time) {
             this.activeSymbolNotifiedTime = c.time;
             this.playAlarmSound(440, 'triangle', 0.2);
             setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
-            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Williams Erken Tepe Sinyali Geldi!\n<b>Tepe Fiyatı:</b> $${c.high.toFixed(prec)}\n\n⚠️ Dikkat: Canlı paritede düşüş tetiklendi, kâr al bölgesine ulaşıldı!`);
+            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Canlı paritede TEPE REDDİ fırlatıldı!\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}`);
           }
         }
       }
     }
 
-    // 🛠️ GRAFİĞE SADECE VE SADECE 1 ADET ETİKET GÖNDERİLİYOR (ÇOKLU ETİKET VE BİNME BİTTİ!)
-    if (this.lastActiveLabel) {
-      markers.push(this.lastActiveLabel);
-    }
-
+    if (this.lastActiveLabel) { markers.push(this.lastActiveLabel); }
     this.candleSeries.setMarkers(markers);
-    this.$('uiDipCount').textContent = this.dipCount;  
+    this.$('uiDipCount').textContent = this.dipCount; 
     this.$('uiTepeCount').textContent = this.tepeCount;
-    
     this.lastSignal = temp;
     this.updateLiveOrderFlowUI();
   }
@@ -512,9 +497,9 @@ class SmartMoneyHybridEngine {
     if(!last) return;
 
     if(this.lastSignal.decision === 'DIP_ALIM') {
-      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (BALYOZ)"; this.$('uiTrendStatus').className = "up-text";
+      this.$('uiTrendStatus').textContent = "YÜKSELİŞ (İĞNE)"; this.$('uiTrendStatus').className = "up-text";
     } else if(this.lastSignal.decision === 'TEPE_SATIM') {
-      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (ŞELALE)"; this.$('uiTrendStatus').className = "down-text";
+      this.$('uiTrendStatus').textContent = "DÜŞÜŞ (REDDEDİLME)"; this.$('uiTrendStatus').className = "down-text";
     } else {
       this.$('uiTrendStatus').textContent = "NÖTR"; this.$('uiTrendStatus').className = "muted-text";
     }
@@ -541,6 +526,7 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
+  // 🚀 RADAR MOTORU REFORMU: ARTIK BALYOZ DEĞİL, TAMAMEN DİPTEN İĞNE ATAN EN GÜÇLÜ PARİTELERİ TARAR VE TELEGRAMA ATAR
   async runBalyozScanner(isAutoBackground = false) {
     let listEl = this.$('uiRadarPool');
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
@@ -548,40 +534,53 @@ class SmartMoneyHybridEngine {
 
     for (let coin of targetCoins) {
       try {
-        const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=${this.activeInterval}&limit=40`);
-        const candles = d.map(k => ({ open: parseFloat(k[1]), close: parseFloat(k[4]) }));
+        const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=${this.activeInterval}&limit=30`);
         
-        const lastCandle = candles[candles.length - 1];
-        const prevCandle = candles[candles.length - 2];
+        // V22 iğne analizi için geçmiş 5 mumun ortalamasını çıkarıyoruz
+        let totalV = 0;
+        for(let m=d.length-6; m<d.length-1; m++) { totalV += parseFloat(d[m][5]); }
+        const avgV5 = totalV / 5;
 
-        const body = Math.abs(lastCandle.close - lastCandle.open);
-        const prevBody = Math.abs(prevCandle.close - prevCandle.open);
+        const lastK = d[d.length - 1];
+        const prevK = d[d.length - 2];
 
-        const isBalyozBuyFormed = lastCandle.close > lastCandle.open && prevCandle.close < prevCandle.open && body > prevBody * 1.35;
+        const c_open = parseFloat(lastK[1]), c_high = parseFloat(lastK[2]), c_low = parseFloat(lastK[3]), c_close = parseFloat(lastK[4]), c_vol = parseFloat(lastK[5]);
+        const p_high = parseFloat(prevK[2]), p_low = parseFloat(prevK[3]);
 
-        if (isBalyozBuyFormed) {
+        const candleRange = c_high - c_low;
+        const saticiBaskisi = candleRange > 0 ? ((c_high - Math.max(c_open, c_close)) / candleRange * 100) : 0;
+        const aliciBaskisi = candleRange > 0 ? ((Math.min(c_open, c_close) - c_low) / candleRange * 100) : 0;
+
+        const anlikDiptenTepki = c_low > 0 ? ((c_close - c_low) / c_low) * 100 : 0;
+        
+        // Dipten İğne Atıp Dönme Şartı (ZEC'i kurtaran canavar matematik!)
+        const isDipRejectionFormed = c_low < p_low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI && (c_vol > avgV5 * 0.8) && aliciBaskisi > saticiBaskisi;
+
+        if (isDipRejectionFormed) {
           scanResults.push({
             symbol: coin,
-            balyozPrice: lastCandle.open 
+            rejectionPrice: c_low 
           });
 
-          let notifyKey = `${coin}_${lastCandle.open}_${this.activeInterval}`;
+          let notifyKey = `rej_${coin}_${c_low}_${this.activeInterval}`;
           if (!this.notifiedCoins[notifyKey]) {
             this.notifiedCoins[notifyKey] = true;
             this.playAlarmSound(880, 'sine', 0.2); 
-            this.sendTelegramAlert(`🚀 <b>BALYOZ RADAR AVCISI</b>\n\n<b>Parite:</b> ${coin}\n<b>Periyot:</b> ${this.activeInterval.toUpperCase()}\n<b>Giriş Fiyatı:</b> $${lastCandle.open.toLocaleString('en-US')}\n\n⚠️ Formasyon doğrulandı, pozisyon takibini başlatın!`);
+            
+            // Telegram Bildirimi (Tam istediğin formata revize edildi)
+            this.sendTelegramAlert(`🎯 <b>İĞNE RADAR AVCISI V22</b>\n\n<b>Parite:</b> ${coin}\n<b>Zaman Dilimi:</b> ${this.activeInterval.toUpperCase()}\n<b>Dip İğne Fiyatı:</b> $${c_low.toLocaleString('en-US')}\n\n⚠️ Balinalar dipten taze para soktu! Fitil onaylandı, ani yükseliş tetikleniyor!`);
           }
         }
       } catch (e) {}
     }
 
     if (scanResults.length === 0) {
-      listEl.innerHTML = `<div class="text-center py-4 text-[10px] text-slate-500"><i class="fa-solid fa-spinner animate-spin"></i> Aktif ${this.activeInterval.toUpperCase()} periyodunda BALYOZ aranıyor...</div>`;
+      listEl.innerHTML = `<div class="text-center py-4 text-[10px] text-slate-500"><i class="fa-solid fa-spinner animate-spin"></i> Aktif ${this.activeInterval.toUpperCase()} periyodunda DİP Fitili aranıyor...</div>`;
     } else {
       listEl.innerHTML = scanResults.slice(0, 4).map(s => `
         <div class="radar-pool-item" data-symbol="${s.symbol}">
-          <div class="font-bold text-white"><i class="fa-solid fa-hammer text-green-400 mr-1 animate-pulse"></i> ${s.symbol}</div>
-          <div class="text-[10px] text-brand-primary up-text">BALYOZ GİRİŞ: $${s.balyozPrice.toLocaleString('en-US')}</div>
+          <div class="font-bold text-white"><i class="fa-solid fa-satellite-dish text-green-400 mr-1 animate-pulse"></i> ${s.symbol}</div>
+          <div class="text-[10px] text-brand-primary up-text">DİP İĞNESİ: $${s.rejectionPrice.toLocaleString('en-US')}</div>
         </div>
       `).join('');
     }
