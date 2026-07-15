@@ -252,8 +252,8 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
     
-    // FİYAT SABİTLEME BELLEĞİ
-    this.fixedSignalPrices = {}; 
+    // 🛠️ PINE SCRIPT ETİKET KİLİT BELLEĞİ (Yalnızca 1 adet güncel durumu kilitler)
+    this.pineLabelStore = { time: 0, price: 0, type: 'NÖTR' }; 
     
     this.userLimits = 3;
     this.userTier = 'Ücretsiz Üye';
@@ -358,7 +358,7 @@ class SmartMoneyHybridEngine {
 
   selectAndLoadCoin(symbol) {
     this.activeSymbol = symbol;
-    this.fixedSignalPrices = {}; 
+    this.pineLabelStore = { time: 0, price: 0, type: 'NÖTR' }; // Sıfırla
     const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
     this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
     
@@ -450,79 +450,72 @@ class SmartMoneyHybridEngine {
     };
   }
 
+  // 🛠️ PINE SCRIPT KLASİK TEK ETİKET (LABEL) REFORMU (KESİN ÇÖZÜM)
   analyzeHybridFlow() {
-    if(this.candles.length < 21) return;
+    if(this.candles.length < 2) return;
     
-    let totalWhaleSize = 0;
-    let totalMarketVol = 0;
-    for(let i = this.candles.length - 21; i < this.candles.length - 1; i++) {
-      totalWhaleSize += (this.candles[i].quoteVolume / (this.candles[i].trades || 1));
-      totalMarketVol += this.candles[i].volume;
-    }
-    const avgWhaleSize = totalWhaleSize / 20;
-    const avgMarketVol = totalMarketVol / 20;
-
-    let markers = []; this.dipCount = 0; this.tepeCount = 0;
+    let markers = []; 
+    this.dipCount = 0; this.tepeCount = 0;
     let temp = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ İzleme aktif.' };
-
     const prec = this.getPrecision(this.candles[0].close);
 
-    for(let i = 20; i < this.candles.length; i++) {
-      const c = this.candles[i];
-      const prev = this.candles[i-1];
-      const body = Math.abs(c.close - c.open);
-      const prevBody = Math.abs(prev.close - prev.open);
-      const lowWick = Math.min(c.open, c.close) - c.low;
-      const upWick = c.high - Math.max(c.open, c.close);
-      const currentWhaleSize = c.quoteVolume / (c.trades || 1);
-      const takerRatio = c.takerBuyQuote / (c.quoteVolume || 1);
-      
-      const isSmartBuy = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio > 0.55);
-      const isSmartSell = (currentWhaleSize > avgWhaleSize * 1.3) && (takerRatio < 0.45);
-      const isBalyozBuy = c.close > c.open && prev.close < prev.open && body > prevBody * 1.35;
-      const isSelaleSell = c.close < c.open && prev.close > prev.open && body > prevBody * 1.35;
-      const isDipDonus = (lowWick > body * 1.5) && (c.close >= c.open) && (c.volume > avgMarketVol * 0.8);
-      const isTepeDonus = (upWick > body * 1.5) && (c.close <= c.open) && (c.volume > avgMarketVol * 0.8);
+    // En son canlı mum ve bir önceki mum verisi
+    const c = this.candles[this.candles.length - 1];
+    const prev = this.candles[this.candles.length - 2];
+    
+    // Şart yön durumları
+    const isUpCandle = c.close >= c.open; 
 
-      let keyB = `B_${c.time}`;
-      let keyS = `S_${c.time}`;
+    // Yeni mum zamanı kontrol kilidi (Hafıza kontrolü)
+    if (this.pineLabelStore.time !== c.time) {
+      this.pineLabelStore.time = c.time;
+      this.pineLabelStore.price = c.open; // Seans/Mum ilk oluştuğu andaki fiyata (Örn: 1 TL) çakıyoruz
+      this.pineLabelStore.type = isUpCandle ? 'AL' : 'SAT';
+    }
 
-      if(isSmartBuy || isBalyozBuy || isDipDonus) {
-        this.dipCount++;
-        let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
-        
-        if (!this.fixedSignalPrices[keyB]) {
-          this.fixedSignalPrices[keyB] = c.open;
-        }
-        let fixedPrice = this.fixedSignalPrices[keyB];
-        
-        markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${fixedPrice.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: fixedPrice, msg: `🟢 BALYOZ ONAYI: Sinyal $${fixedPrice.toFixed(prec)} Alış fiyatında kilitlendi.` };
-        }
-      } 
-      else if(isSmartSell || isSelaleSell || isTepeDonus) {
-        this.tepeCount++;
-        let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
-        
-        if (!this.fixedSignalPrices[keyS]) {
-          this.fixedSignalPrices[keyS] = c.open;
-        }
-        let fixedPrice = this.fixedSignalPrices[keyS];
-
-        markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${fixedPrice.toFixed(prec)})` });
-        
-        if(i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: fixedPrice, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${fixedPrice.toFixed(prec)} fiyatta kilitlendi.` };
-        }
+    // 🛠️ ŞART KONTROLÜ: Mum açılış fiyatının altına inmediği sürece 'AL', üstüne çıkmadığı sürece 'SAT'
+    if (this.pineLabelStore.type === 'AL') {
+      if (c.close < this.pineLabelStore.price) {
+        // Şart ihlal edildi: Mum açılışın altına düştü, anında SAT moduna çevir ve fiyatı o an sabitle!
+        this.pineLabelStore.type = 'SAT';
+        this.pineLabelStore.price = c.open; 
+      }
+    } else if (this.pineLabelStore.type === 'SAT') {
+      if (c.close > this.pineLabelStore.price) {
+        // Şart ihlal edildi: Düşen mum bitti, yükseliş başladı, AL moduna çevir ve fiyatı sabitle!
+        this.pineLabelStore.type = 'AL';
+        this.pineLabelStore.price = c.open;
       }
     }
 
+    // 🛠️ PINE SCRIPT MANTIĞI: ESKİLERİN HEPSİNİ SİL, SADECE 1 TANE GÜNCEL ETİKET BAS!
+    if (this.pineLabelStore.type === 'AL') {
+      this.dipCount = 1;
+      markers.push({
+        time: c.time,
+        position: 'belowBar',
+        color: '#00f5d4',
+        shape: 'arrowUp',
+        text: `AL: $${this.pineLabelStore.price.toFixed(prec)}`
+      });
+      temp = { decision: 'DIP_ALIM', price: this.pineLabelStore.price };
+    } else {
+      this.tepeCount = 1;
+      markers.push({
+        time: c.time,
+        position: 'aboveBar',
+        color: '#ff0054',
+        shape: 'arrowDown',
+        text: `SAT: $${this.pineLabelStore.price.toFixed(prec)}`
+      });
+      temp = { decision: 'TEPE_SATIM', price: this.pineLabelStore.price };
+    }
+
+    // Listeye tekil işareti gönder
     this.candleSeries.setMarkers(markers);
+    
     this.$('uiDipCount').textContent = this.dipCount; 
     this.$('uiTepeCount').textContent = this.tepeCount;
-    
     this.lastSignal = temp;
     this.updateLiveOrderFlowUI();
   }
