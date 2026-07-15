@@ -6,6 +6,7 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- FontAwesome Icons for UI -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -245,17 +246,18 @@
 <script>
 class SmartMoneyHybridEngine {
   constructor() {
-    options_rules = true;
     this.API_BASES = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
     this.candles = []; this.ws = null; this.chart = null; this.candleSeries = null; this.volumeSeries = null;
     this.activeSymbol = 'BTCUSDT'; this.activeInterval = '1d'; this.activeTab = 'USDT'; this.symbolsData = [];
     this.dipCount = 0; this.tepeCount = 0;
-    
-    // 🛠️ FİYAT SABİTLEME BELLEĞİ (İlk tetiklendiği saniyedeki fiyatı tutar)
-    this.fixedSignalPrices = {}; 
-    
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
     
+    // FİYAT SABİTLEME BELLEĞİ
+    this.fixedSignalPrices = {}; 
+    
+    this.userLimits = 3;
+    this.userTier = 'Ücretsiz Üye';
+
     this.init();
   }
 
@@ -356,7 +358,7 @@ class SmartMoneyHybridEngine {
 
   selectAndLoadCoin(symbol) {
     this.activeSymbol = symbol;
-    this.fixedSignalPrices = {}; // Parite değişince fiyat geçmişini sıfırla
+    this.fixedSignalPrices = {}; 
     const activeTfText = document.querySelector('.tf-selector-btn.active').innerText;
     this.$('uiActiveSymbol').innerHTML = `${this.activeSymbol} <span>${activeTfText}</span>`;
     
@@ -410,6 +412,7 @@ class SmartMoneyHybridEngine {
       this.candleSeries.applyOptions({ priceFormat: { type: 'price', precision: prec } });
       this.candleSeries.setData(this.candles);
       this.volumeSeries.setData(this.candles.map(c => ({ time: c.time, value: c.quoteVolume, color: c.close >= c.open ? 'rgba(0,245,212,0.15)' : 'rgba(255,0,84,0.15)' })));
+      
       this.chart.timeScale().fitContent();
       
       this.analyzeHybridFlow();
@@ -464,7 +467,6 @@ class SmartMoneyHybridEngine {
 
     const prec = this.getPrecision(this.candles[0].close);
 
-    // 🛠️ DÖNGÜ SON CANLI MUMU DA KAPSAYACAK BİÇİMDE i < length YAPILDI
     for(let i = 20; i < this.candles.length; i++) {
       const c = this.candles[i];
       const prev = this.candles[i-1];
@@ -489,7 +491,6 @@ class SmartMoneyHybridEngine {
         this.dipCount++;
         let label = isDipDonus ? 'DİP DÖNÜŞÜ' : (isBalyozBuy ? 'BALYOZ AL' : 'KURUMSAL AL');
         
-        // 🛠️ İLK ANIN FİYATINI KİLİTLE: Sinyalin tetiklendiği andaki mumun AÇILIŞ fiyatını temel al ve sabitle!
         if (!this.fixedSignalPrices[keyB]) {
           this.fixedSignalPrices[keyB] = c.open;
         }
@@ -498,14 +499,13 @@ class SmartMoneyHybridEngine {
         markers.push({ time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp', text: `${label} (ALIŞ: $${fixedPrice.toFixed(prec)})` });
         
         if(i === this.candles.length - 1) {
-          temp = { decision: 'DIP_ALIM', price: fixedPrice, msg: `🟢 BALYOZ ONAYI: Sinyal $${fixedPrice.toFixed(prec)} Alış fiyatında sabitlendi.` };
+          temp = { decision: 'DIP_ALIM', price: fixedPrice, msg: `🟢 BALYOZ ONAYI: Sinyal $${fixedPrice.toFixed(prec)} Alış fiyatında kilitlendi.` };
         }
       } 
       else if(isSmartSell || isSelaleSell || isTepeDonus) {
         this.tepeCount++;
         let label = isTepeDonus ? 'TEPE REDDİ' : (isSelaleSell ? 'ŞELALE SAT' : 'KURUMSAL SAT');
         
-        // 🛠️ İLK ANIN FİYATINI KİLİTLE: Sinyalin tetiklendiği andaki mumun AÇILIŞ fiyatını temel al ve sabitle!
         if (!this.fixedSignalPrices[keyS]) {
           this.fixedSignalPrices[keyS] = c.open;
         }
@@ -514,7 +514,7 @@ class SmartMoneyHybridEngine {
         markers.push({ time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown', text: `${label} (SATIŞ: $${fixedPrice.toFixed(prec)})` });
         
         if(i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: fixedPrice, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${fixedPrice.toFixed(prec)} fiyatta sabitlendi.` };
+          temp = { decision: 'TEPE_SATIM', price: fixedPrice, msg: `🔴 ŞELALE ONAYI: Satış sinyali $${fixedPrice.toFixed(prec)} fiyatta kilitlendi.` };
         }
       }
     }
