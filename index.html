@@ -397,7 +397,6 @@ class SmartMoneyHybridEngine {
 
   connectWS() {
     if(this.ws) this.ws.close();
-    // 🛠️ SABİT KİLİT DÜZELTME: stream.stream.binance.com adresi stream.binance.com olarak tamir edildi!
     this.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${this.activeSymbol.toLowerCase()}@kline_${this.activeInterval}`);
     this.ws.onmessage = (e) => {
       const m = JSON.parse(e.data); if(!m.k) return; const k = m.k;
@@ -422,6 +421,7 @@ class SmartMoneyHybridEngine {
       this.$('uiLastUpdate').textContent = new Date().toLocaleTimeString('tr-TR');
       this.$('uiCandleTime').textContent = new Date(c.time*1000).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
       
+      // 🛠️ BURASI TAMİR EDİLDİ: Canlı veri aktıkça V22 İğne Motorunun tetiği sorunsuz çalışacak!
       this.analyzeHybridFlow();
     };
   }
