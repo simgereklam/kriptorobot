@@ -6,6 +6,7 @@
   <title>SMART MONEY HYBRID TERMINAL V13 - DİP AVCISI</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- FontAwesome Icons for UI -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -229,6 +230,7 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0, msg: '⏳ HİBRİT ANALİZ: Dönüş bekleniyor.' };
     
+    this.fixedSignalPrices = {};
     this.lastActiveLabel = null; 
     this.audioCtx = null;
 
@@ -245,7 +247,6 @@ class SmartMoneyHybridEngine {
     await this.loadTickers();
     await this.loadCandles();
     
-    // 🚀 RADAR ARTIK YÜZDE YÜZ V22 İĞNE ALGORİTMASIYLA 5 SANİYEDE BİR ÇALIŞIYOR
     this.runBalyozScanner(true);
     setInterval(() => this.runBalyozScanner(true), 5000); 
     setInterval(() => this.loadTickers(), 45000);
@@ -396,6 +397,7 @@ class SmartMoneyHybridEngine {
 
   connectWS() {
     if(this.ws) this.ws.close();
+    // 🛠️ SABİT KİLİT DÜZELTME: stream.stream.binance.com adresi stream.binance.com olarak tamir edildi!
     this.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${this.activeSymbol.toLowerCase()}@kline_${this.activeInterval}`);
     this.ws.onmessage = (e) => {
       const m = JSON.parse(e.data); if(!m.k) return; const k = m.k;
@@ -526,7 +528,6 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
-  // 🚀 RADAR MOTORU REFORMU: ARTIK BALYOZ DEĞİL, TAMAMEN DİPTEN İĞNE ATAN EN GÜÇLÜ PARİTELERİ TARAR VE TELEGRAMA ATAR
   async runBalyozScanner(isAutoBackground = false) {
     let listEl = this.$('uiRadarPool');
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
@@ -536,7 +537,6 @@ class SmartMoneyHybridEngine {
       try {
         const d = await this.api(`/api/v3/klines?symbol=${coin}&interval=${this.activeInterval}&limit=30`);
         
-        // V22 iğne analizi için geçmiş 5 mumun ortalamasını çıkarıyoruz
         let totalV = 0;
         for(let m=d.length-6; m<d.length-1; m++) { totalV += parseFloat(d[m][5]); }
         const avgV5 = totalV / 5;
@@ -553,7 +553,6 @@ class SmartMoneyHybridEngine {
 
         const anlikDiptenTepki = c_low > 0 ? ((c_close - c_low) / c_low) * 100 : 0;
         
-        // Dipten İğne Atıp Dönme Şartı (ZEC'i kurtaran canavar matematik!)
         const isDipRejectionFormed = c_low < p_low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI && (c_vol > avgV5 * 0.8) && aliciBaskisi > saticiBaskisi;
 
         if (isDipRejectionFormed) {
@@ -566,8 +565,6 @@ class SmartMoneyHybridEngine {
           if (!this.notifiedCoins[notifyKey]) {
             this.notifiedCoins[notifyKey] = true;
             this.playAlarmSound(880, 'sine', 0.2); 
-            
-            // Telegram Bildirimi (Tam istediğin formata revize edildi)
             this.sendTelegramAlert(`🎯 <b>İĞNE RADAR AVCISI V22</b>\n\n<b>Parite:</b> ${coin}\n<b>Zaman Dilimi:</b> ${this.activeInterval.toUpperCase()}\n<b>Dip İğne Fiyatı:</b> $${c_low.toLocaleString('en-US')}\n\n⚠️ Balinalar dipten taze para soktu! Fitil onaylandı, ani yükseliş tetikleniyor!`);
           }
         }
