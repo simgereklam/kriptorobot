@@ -219,7 +219,7 @@ class SmartMoneyHybridEngine {
     this.notifiedCoins = {}; 
     this.activeSymbolNotifiedTime = 0; 
 
-    // PINE V22 KULLANICI PARAMETRELERİ (TARAMA MOTORU İÇİN)
+    // PINE V22 KULLANICI PARAMETRELERİ (TARAMA MOTORU SIKILIĞI İÇİN)
     this.TEPE_GERI_CEKILME = 1.0; 
     this.DIP_TEPKI_ORANI = 1.0;   
 
@@ -229,7 +229,7 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0 };
     
-    // Pine Script label.delete mantığı için tekil etiket kilit hafızası
+    // Pine Script barstate.islast Mantığı İçin Tek Canlı Etiket Tutucu
     this.lastActiveLabel = null; 
     this.fixedSignalPrices = {};
 
@@ -426,24 +426,22 @@ class SmartMoneyHybridEngine {
     };
   }
 
-  // 🛠️ ETİKET DÖNGÜSÜ TAMAMEN BAĞIMSIZ HALE GETİRİLDİ (PINE SCRIPT ETİKET REFORMU)
+  // 🛠️ PINE SCRIPT ETİKET REFORMU (DÖNGÜLER TARAYICIDAN TAMAMEN BAĞIMSIZDIR, HİÇBİR HİSSE ETİKETSİZ KALMAZ)
   analyzeHybridFlow() {
     if(this.candles.length < 3) return;
     
     let markers = []; 
     this.dipCount = 0; this.tepeCount = 0;
-    this.lastActiveLabel = null; // Öncekileri hafızadan label.delete mantığıyla siler
+    this.lastActiveLabel = null; 
     let temp = { decision: 'IZLEME', price: 0, stop: 0 };
     const prec = this.getPrecision(this.candles[0].close);
 
-    // 🚀 GRAFİK ETİKET SİSTEMİ: Ağır tarayıcı filtrelerinden tamamen bağımsız, saf iğne yönünü izler!
+    // 🚀 GRAFİK ETİKET MOTORU: Ağır lot filtrelerine bakmaz, saf iğne yönünü izler (earlyBuy/earlySell)
     for(let i = 2; i < this.candles.length; i++) {
       const c = this.candles[i];
       const prev = this.candles[i-1];
 
-      // earlyBuy = low < low[1] and low[1] < low[2]
       const earlyBuy = c.low < prev.low;
-      // earlySell = high > high[1] and high[1] > high[2]
       const earlySell = c.high > prev.high;
 
       if (earlyBuy && (c.close >= c.open)) {
@@ -453,7 +451,7 @@ class SmartMoneyHybridEngine {
 
         this.lastActiveLabel = {
           time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
-          text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}` // Fiyatı mumun en düşüğüne çakıp kilitler
+          text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}`
         };
         if (i === this.candles.length - 1) { temp = { decision: 'DIP_ALIM', price: fixedPrice }; }
       } 
@@ -464,7 +462,7 @@ class SmartMoneyHybridEngine {
 
         this.lastActiveLabel = {
           time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
-          text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}` // Fiyatı mumun en yükseğine çakıp kilitler
+          text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}`
         };
         if (i === this.candles.length - 1) {
           temp = { decision: 'TEPE_SATIM', price: fixedPrice };
@@ -521,7 +519,7 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
-  // 🚀 SENKRONİZE RADAR: SADECE BU BAĞIMSIZ TARAMA MOTORU AĞIR V22 BÖLGESEL İĞNE FORMÜLLERİNİ VE BALİNA GİRİŞLERİNİ SÜZER!
+  // 🚀 SENKRONİZE RADAR: Sadece bu bağımsız tarama motoru ağır V22 bölgesel iğne formüllerini ve balina girişlerini süzer!
   async runBalyozScanner(isAutoBackground = false) {
     let listEl = this.$('uiRadarPool');
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
