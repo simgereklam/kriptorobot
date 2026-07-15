@@ -213,13 +213,12 @@
 <script>
 class SmartMoneyHybridEngine {
   constructor() {
-    // TELEGRAM ENTEGRASYON AYARLARI
     this.TELEGRAM_BOT_TOKEN = ""; 
     this.TELEGRAM_CHAT_ID = "";
     this.notifiedCoins = {}; 
     this.activeSymbolNotifiedTime = 0; 
 
-    // PINE V22 KULLANICI PARAMETRELERİ (TARAMA MOTORU SIKILIĞI İÇİN)
+    // PINE V22 GÜVENLİK FİLTRELERİ (Sadece Radar Tarayıcı İçindir)
     this.TEPE_GERI_CEKILME = 1.0; 
     this.DIP_TEPKI_ORANI = 1.0;   
 
@@ -229,7 +228,7 @@ class SmartMoneyHybridEngine {
     this.dipCount = 0; this.tepeCount = 0;
     this.lastSignal = { decision: 'IZLEME', price: 0, stop: 0 };
     
-    // Pine Script barstate.islast Mantığı İçin Tek Canlı Etiket Tutucu
+    // 🛠️ PINE SCRIPT 'barstate.islast' BİREBİR REFORMA UYGUN HAFIZA KİLİTLERİ
     this.lastActiveLabel = null; 
     this.fixedSignalPrices = {};
 
@@ -426,58 +425,62 @@ class SmartMoneyHybridEngine {
     };
   }
 
-  // 🛠️ PINE SCRIPT ETİKET REFORMU (DÖNGÜLER TARAYICIDAN TAMAMEN BAĞIMSIZDIR, HİÇBİR HİSSE ETİKETSİZ KALMAZ)
+  // 🛠️ KESİN REFORM: DÖNGÜLER TAMAMEN KALDIRILDI! %100 BAĞIMSIZ VE 'barstate.islast' GİBİ SADECE SON CANLI MUMU İZLER!
   analyzeHybridFlow() {
     if(this.candles.length < 3) return;
     
     let markers = []; 
     this.dipCount = 0; this.tepeCount = 0;
-    this.lastActiveLabel = null; 
     let temp = { decision: 'IZLEME', price: 0, stop: 0 };
     const prec = this.getPrecision(this.candles[0].close);
 
-    // 🚀 GRAFİK ETİKET MOTORU: Ağır lot filtrelerine bakmaz, saf iğne yönünü izler (earlyBuy/earlySell)
-    for(let i = 2; i < this.candles.length; i++) {
-      const c = this.candles[i];
-      const prev = this.candles[i-1];
+    // 🚀 PINE SCRIPT 'barstate.islast' BİREBİR KARŞILIĞI: Sadece dizideki en son canlı mumu baz al (Kör döngü bitti!)
+    const c = this.candles[this.candles.length - 1];
+    const prev = this.candles[this.candles.length - 2];
 
-      const earlyBuy = c.low < prev.low;
-      const earlySell = c.high > prev.high;
+    // earlyBuy = low < low[1] / earlySell = high > high[1] (Yön İğne Tespiti)
+    const earlyBuy = c.low < prev.low;
+    const earlySell = c.high > prev.high;
 
-      if (earlyBuy && (c.close >= c.open)) {
-        this.dipCount = 1; this.tepeCount = 0;
-        if (!this.fixedSignalPrices[`B_${c.time}`]) { this.fixedSignalPrices[`B_${c.time}`] = c.low; }
-        let fixedPrice = this.fixedSignalPrices[`B_${c.time}`];
+    if (earlyBuy && (c.close >= c.open)) {
+      this.dipCount = 1; this.tepeCount = 0;
+      
+      // Sinyalin geldiği ilk salisedeki fiyatı mumun en düşüğüne (low) çivileyip kilitle ve ASLA kıpırdatma!
+      if (!this.fixedSignalPrices[`B_${c.time}`]) { this.fixedSignalPrices[`B_${c.time}`] = c.low; }
+      let fixedPrice = this.fixedSignalPrices[`B_${c.time}`];
 
-        this.lastActiveLabel = {
-          time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
-          text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}`
-        };
-        if (i === this.candles.length - 1) { temp = { decision: 'DIP_ALIM', price: fixedPrice }; }
-      } 
-      else if (earlySell && (c.close <= c.open)) {
-        this.tepeCount = 1; this.dipCount = 0;
-        if (!this.fixedSignalPrices[`S_${c.time}`]) { this.fixedSignalPrices[`S_${c.time}`] = c.high; }
-        let fixedPrice = this.fixedSignalPrices[`S_${c.time}`];
+      this.lastActiveLabel = {
+        time: c.time, position: 'belowBar', color: '#00f5d4', shape: 'arrowUp',
+        text: `DİP GİRİŞ AL\n$${fixedPrice.toFixed(prec)}`
+      };
+      temp = { decision: 'DIP_ALIM', price: fixedPrice };
+    } 
+    else if (earlySell && (c.close <= c.open)) {
+      this.tepeCount = 1; this.dipCount = 0;
+      
+      // Sinyalin geldiği ilk salisedeki fiyatı mumun en yükseğine (high) çivileyip kilitle ve ASLA kıpırdatma!
+      if (!this.fixedSignalPrices[`S_${c.time}`]) { this.fixedSignalPrices[`S_${c.time}`] = c.high; }
+      let fixedPrice = this.fixedSignalPrices[`S_${c.time}`];
 
-        this.lastActiveLabel = {
-          time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
-          text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}`
-        };
-        if (i === this.candles.length - 1) {
-          temp = { decision: 'TEPE_SATIM', price: fixedPrice };
-          
-          if (this.activeSymbolNotifiedTime !== c.time) {
-            this.activeSymbolNotifiedTime = c.time;
-            this.playAlarmSound(440, 'triangle', 0.2);
-            setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
-            this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Grafikte takip edilen paritede TEPE REDDİ fitili onaylandı!\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}`);
-          }
-        }
+      this.lastActiveLabel = {
+        time: c.time, position: 'aboveBar', color: '#ff0054', shape: 'arrowDown',
+        text: `TEPE ÇIKIŞ SAT\n$${fixedPrice.toFixed(prec)}`
+      };
+      temp = { decision: 'TEPE_SATIM', price: fixedPrice };
+      
+      if (this.activeSymbolNotifiedTime !== c.time) {
+        this.activeSymbolNotifiedTime = c.time;
+        this.playAlarmSound(440, 'triangle', 0.2);
+        setTimeout(() => this.playAlarmSound(440, 'triangle', 0.2), 300);
+        this.sendTelegramAlert(`🚨 <b>ACİL KORUMA ALARMI</b>\n\n<b>Parite:</b> ${this.activeSymbol}\n<b>Durum:</b> Grafikte anlık TEPE REDDİ fitili onaylandı!\n<b>Fiyat:</b> $${fixedPrice.toFixed(prec)}`);
       }
     }
 
-    if (this.lastActiveLabel) { markers.push(this.lastActiveLabel); }
+    // Hafızadaki tek güncel canlı mumu haritaya fırlat (Geçmişe asla basmaz)
+    if (this.lastActiveLabel && this.lastActiveLabel.time === c.time) { 
+      markers.push(this.lastActiveLabel); 
+    }
+
     this.candleSeries.setMarkers(markers);
     this.$('uiDipCount').textContent = this.dipCount; 
     this.$('uiTepeCount').textContent = this.tepeCount;
@@ -519,7 +522,7 @@ class SmartMoneyHybridEngine {
     this.$('uiWhaleIndexVal').textContent = `${whaleMultiplier.toFixed(2)}x`;
   }
 
-  // 🚀 SENKRONİZE RADAR: Sadece bu bağımsız tarama motoru ağır V22 bölgesel iğne formüllerini ve balina girişlerini süzer!
+  // 🚀 RADAR MOTORU: KENDİ BAĞIMSIZ HÜCRESİNDE BÜTÜN TAHTALARI V22 AĞIR KURUMSAL ŞARTLARINA GÖRE TARAR
   async runBalyozScanner(isAutoBackground = false) {
     let listEl = this.$('uiRadarPool');
     const targetCoins = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'XRPUSDT', 'ADAUSDT', 'DOTUSDT', 'SHIBUSDT', 'DOGEUSDT', 'UNIUSDT', 'FILUSDT'];
@@ -545,7 +548,6 @@ class SmartMoneyHybridEngine {
 
         const anlikDiptenTepki = c_low > 0 ? ((c_close - c_low) / c_low) * 100 : 0;
         
-        // Ağır V22 kurumsal balina filtresi (Hisse bulup listeye atan bağımsız döngü)
         const isDipRejectionFormed = c_low < p_low && anlikDiptenTepki >= this.DIP_TEPKI_ORANI && (c_vol > avgV5 * 0.7) && aliciBaskisi > saticiBaskisi;
 
         if (isDipRejectionFormed) {
