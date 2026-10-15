@@ -1,0 +1,25 @@
+name: Build Mobile App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install flet pandas websockets
+          
+      - name: Build APK with Flet
+        run: |
+          flet pack main.py --platforms android
