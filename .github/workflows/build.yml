@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+  # Flet'in Android build alabilmesi için doğrudan Ubuntu işletim sisteminde tam yetkili ortam kuruyoruz
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +16,7 @@ jobs:
         with:
           python-version: '3.10'
           
-      - name: Set up Java
+      - name: Set up Java (Gradle için şart)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -33,12 +34,15 @@ jobs:
           pip install --upgrade pip
           pip install flet pandas websockets
           
-      - name: Build APK with Flet
+      - name: Build Android APK
         run: |
-          flet build apk --yes
-
-      - name: Upload APK
+          # Projeyi flutter ile doğrudan Android APK modunda derlemeye zorluyoruz
+          flet build apk --project-path . --yes
+          
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binance-apk
-          path: build/apk/*.apk
+          path: |
+            build/apk/*.apk
+            build/**/output-metadata.json
