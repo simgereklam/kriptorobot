@@ -22,4 +22,4 @@ jobs:
           
       - name: Build APK with Flet
         run: |
-          flet pack main.py --platforms android
+          flet build apk
