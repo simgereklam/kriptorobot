@@ -196,4 +196,4 @@ def main(page: ft.Page):
 
     threading.Thread(target=load_market, daemon=True).start()
 
-ft.app(target=main)
+ft.app(main)
