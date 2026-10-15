@@ -6,7 +6,6 @@ on:
 
 jobs:
   build:
-  # Flet'in Android build alabilmesi için doğrudan Ubuntu işletim sisteminde tam yetkili ortam kuruyoruz
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +15,7 @@ jobs:
         with:
           python-version: '3.10'
           
-      - name: Set up Java (Gradle için şart)
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -36,13 +35,10 @@ jobs:
           
       - name: Build Android APK
         run: |
-          # Projeyi flutter ile doğrudan Android APK modunda derlemeye zorluyoruz
-          flet build apk --project-path . --yes
+          flet build apk --yes
           
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binance-apk
-          path: |
-            build/apk/*.apk
-            build/**/output-metadata.json
+          path: build/apk/app-release.apk
